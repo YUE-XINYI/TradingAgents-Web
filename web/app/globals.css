@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-display);
+  --font-mono: var(--font-mono-code);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+:root {
+  --background: #f7f7f7;
+  --foreground: #080808;
+  --card: #ffffff;
+  --card-foreground: #080808;
+  --popover: #ffffff;
+  --popover-foreground: #080808;
+  --primary: #2470eb;
+  --primary-foreground: #ffffff;
+  --secondary: #e9f1fd;
+  --secondary-foreground: #194fa6;
+  --muted: #eaeaea;
+  --muted-foreground: #595959;
+  --accent: #e9f1fd;
+  --accent-foreground: #194fa6;
+  --destructive: #ed5454;
+  --border: #eaeaea;
+  --input: #d6d6d6;
+  --ring: #2470eb;
+  --surface1: #ffffff;
+  --surface2: #e9f1fd;
+  --surface3: #eaeaea;
+  --border-visible: #d6d6d6;
+  --text1: #080808;
+  --text2: #595959;
+  --text3: #a8a8a8;
+  --text4: #d6d6d6;
+  --finance-blue: #2470eb;
+  --finance-blue-hover: #1e5fc7;
+  --market-up: #ed5454;
+  --market-up-bg: #fff1f1;
+  --market-down: #35a34d;
+  --market-down-bg: #edf8ef;
+  --warning: #f2a100;
+  --warning-bg: #fff6e5;
+  --font-display: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono-code: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+.dark {
+  --background: #080808;
+  --foreground: #ffffff;
+  --card: #141414;
+  --card-foreground: #ffffff;
+  --popover: #141414;
+  --popover-foreground: #ffffff;
+  --primary: #4d94f7;
+  --primary-foreground: #ffffff;
+  --secondary: #252525;
+  --secondary-foreground: #85b9fc;
+  --muted: #252525;
+  --muted-foreground: #a8a8a8;
+  --accent: #07162f;
+  --accent-foreground: #85b9fc;
+  --border: #252525;
+  --input: #3d3d3d;
+  --ring: #4d94f7;
+  --surface1: #141414;
+  --surface2: #252525;
+  --surface3: #3d3d3d;
+  --border-visible: #3d3d3d;
+  --text1: #ffffff;
+  --text2: #a8a8a8;
+  --text3: #7a7a7a;
+  --text4: #595959;
+  --finance-blue: #4d94f7;
+  --finance-blue-hover: #2470eb;
+  --market-up-bg: #641f24;
+  --market-down-bg: #153d20;
+  --warning-bg: #5c3b00;
+}
+
+* {
+  border-color: var(--border);
+  outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
+}
+
+html {
+  background: var(--background);
+  font-family: var(--font-body);
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.font-display,
+.font-data {
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-slot='card'] {
+  border-radius: 16px;
+  box-shadow: none !important;
+}
+
+[data-slot='input'],
+[data-slot='native-select'] {
+  min-height: 48px;
+  border-color: transparent;
+  border-radius: 10px;
+  background: var(--surface3);
+  padding-inline: 16px;
+}
+
+[data-slot='input']:focus-visible,
+[data-slot='native-select']:focus-visible {
+  border-color: var(--finance-blue);
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+[data-slot='textarea'] {
+  border-color: transparent;
+  border-radius: 10px;
+  background: var(--surface3);
+}
+
+.analysis-card {
+  background: var(--surface1);
+  box-shadow: none;
+}
+
+.evidence-grid {
+  background: var(--surface1);
+}
+
+.agent-node {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  border: 0;
+  background: var(--accent);
+  box-shadow: none;
+  color: var(--finance-blue);
+}
+
+.agent-node-active {
+  background: var(--finance-blue);
+  color: #ffffff;
+}
+
+.mobile-finance-nav {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -6,14 +6,15 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
-  Bot,
+  Bookmark,
   BrainCircuit,
-  BriefcaseBusiness,
   ChartNoAxesCombined,
   Check,
   ChevronRight,
   Clock3,
+  Eye,
   Gauge,
+  History,
   LayoutDashboard,
   LoaderCircle,
   MessageSquareMore,
@@ -24,9 +25,9 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
+  Star,
   Sun,
-  TrendingDown,
-  TrendingUp,
+  UserRound,
   Users,
   XCircle,
 } from 'lucide-react';
@@ -54,37 +55,31 @@ import {
   NativeSelectOption,
 } from '@/components/ui/native-select';
 import { Progress } from '@/components/ui/progress';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   API_BASE,
   AnalysisEvent,
   AnalysisRun,
   AppView,
   CognitiveMode,
-  Portfolio,
   tradingApi,
 } from '@/lib/trading-api';
-
-const modes: { id: CognitiveMode; label: string; description: string }[] = [
-  { id: 'beginner', label: '入门', description: '结论与白话解释' },
-  { id: 'intermediate', label: '进阶', description: '证据、指标与分歧' },
-  { id: 'expert', label: '专业', description: '完整报告与参数' },
-];
+import {
+  DEFAULT_PROFILE,
+  DEMO_AGENT_REPLIES,
+  DEMO_EVENTS,
+  DEMO_RECENT_VIEWS,
+  DEMO_RUN,
+  DEMO_WATCHLIST,
+  type UserProfile,
+} from '@/lib/demo-data';
 
 const navItems: { id: AppView; label: string; icon: typeof LayoutDashboard }[] =
   [
     { id: 'dashboard', label: '今日工作台', icon: LayoutDashboard },
     { id: 'history', label: '分析记录', icon: ChartNoAxesCombined },
-    { id: 'portfolio', label: '模拟交易', icon: BriefcaseBusiness },
     { id: 'chat', label: 'Agent 协作室', icon: MessageSquareMore },
+    { id: 'profile', label: '我的投研', icon: UserRound },
   ];
 
 const agentRail = [
@@ -149,19 +144,25 @@ const sectionLabels: Record<string, string> = {
 };
 const agentLabels: Record<string, string> = {
   personal: '个人助手',
+  market: '市场分析师',
+  sentiment: '情绪分析师',
+  news: '新闻分析师',
   fundamentals: '基本面分析师',
-  market: '技术分析师',
-  risk: '风险经理',
-  bear: '看空研究员',
-  bull: '看多研究员',
+  research: '研究员',
+  trader: '交易员',
+  risk: '风险分析师',
+  portfolio_manager: '投资组合经理',
 };
 const chatAgentIds = [
   'personal',
-  'fundamentals',
   'market',
+  'sentiment',
+  'news',
+  'fundamentals',
+  'research',
+  'trader',
   'risk',
-  'bear',
-  'bull',
+  'portfolio_manager',
 ] as const;
 type ChatAgentId = (typeof chatAgentIds)[number];
 type ChatChannelId = 'group' | ChatAgentId;
@@ -169,31 +170,105 @@ type ChatMessage = {
   role: 'user' | 'assistant';
   agent?: ChatAgentId;
   content: string;
+  runId?: string;
 };
+const demoGroupConversation: ChatMessage[] = [
+  {
+    role: 'user',
+    content: 'NVDA 最近上涨主要由什么驱动？',
+  },
+  {
+    role: 'assistant',
+    agent: 'market',
+    content:
+      '【事实｜案例窗口】中期趋势偏强，财报与新品节点附近的波动明显放大。\n【边界】价格上涨只能说明当时的市场预期增强，不能证明未来一定继续上涨。',
+  },
+  {
+    role: 'assistant',
+    agent: 'news',
+    content:
+      '【事实｜案例材料】新产品交付、云厂商资本开支与外部政策，是与订单和可销售市场最相关的三类事件。重复转载和没有新增事实的情绪化标题不作为新证据。',
+  },
+  {
+    role: 'assistant',
+    agent: 'personal',
+    content:
+      '先用一句话总结：案例窗口内的上涨由 AI 算力需求预期、产品周期和市场趋势共同推动。\n\n已确认事实：增长驱动和中期强势趋势有案例材料支持。\n分析推断：这些因素还能持续多久，需要后续订单、资本开支和盈利质量验证。\n仍然未知：当前案例不代表今天的实时行情。',
+  },
+  {
+    role: 'user',
+    content: '结合这份报告，现在适合买入吗？',
+  },
+  {
+    role: 'assistant',
+    agent: 'research',
+    content:
+      '支持逻辑：AI 基础设施投入、生态壁垒和产品迭代仍构成上行依据。\n反对逻辑：高增长已经被广泛预期，需求、交付或盈利质量不及预期可能触发估值收缩。\n研究结论：现有证据支持继续观察，不支持把“公司优秀”直接等同于“当前位置应买入”。',
+  },
+  {
+    role: 'assistant',
+    agent: 'trader',
+    content:
+      '我不会在缺少个人约束时生成仓位指令。未持有需要先确认投资周期和可承受波动；已经持有还需要补充成本、仓位集中度与计划退出条件。',
+  },
+  {
+    role: 'assistant',
+    agent: 'risk',
+    content:
+      '乐观情景：增长持续超预期，上行弹性仍在。\n基准情景：增长成立，但需要等待新数据逐步验证。\n保守情景：高预期放大业绩不及预期时的回撤。\n风险结论：在周期和风险边界未知时，不给出直接买入结论。',
+  },
+  {
+    role: 'assistant',
+    agent: 'portfolio_manager',
+    content:
+      '当前裁决：HOLD／条件观察。增长优势与估值、政策风险同时存在，证据不足以支持无条件行动；应在下一次财报、订单和盈利质量更新后重新评估。',
+  },
+  {
+    role: 'assistant',
+    agent: 'personal',
+    content:
+      '所以，“现在该不该买”还不能只凭这份报告回答。报告给出的专业判断是条件观察，不是对你的个人买卖指令。\n\n请你先确认三件事：现在是否持有、计划持有多久、最多能接受多大回撤？',
+  },
+  {
+    role: 'user',
+    content: '哪些情况会让当前判断失效？',
+  },
+  {
+    role: 'assistant',
+    agent: 'risk',
+    content:
+      '重点监控三类失效信号：①订单能见度或客户资本开支持续转弱；②毛利率与盈利质量明显低于当前假设；③政策变化实质压缩可销售市场。任一项出现，都需要重新运行分析。',
+  },
+  {
+    role: 'assistant',
+    agent: 'personal',
+    content:
+      '你可以把失效条件记成一张观察清单：需求有没有转弱、利润质量有没有恶化、外部政策有没有改变市场空间。它们是重新评估的触发器，不是预测价格一定下跌。',
+  },
+];
 const agentDescriptions: Record<ChatAgentId, string> = {
-  personal: '理解你的认知与决策偏好',
-  fundamentals: '财务、估值与商业模式',
-  market: '价格趋势与技术指标',
-  risk: '下行风险与仓位边界',
-  bear: '挑战乐观假设与寻找反例',
-  bull: '寻找上涨驱动与触发条件',
+  personal: '理解你的关注点并组织结论',
+  market: '价格趋势、成交与技术指标',
+  sentiment: '市场讨论、预期与情绪边界',
+  news: '公司新闻、公告与宏观事件',
+  fundamentals: '财务、业务与长期竞争力',
+  research: '呈现支持、反对、分歧与研究结论',
+  trader: '把研究判断转为条件化方案',
+  risk: '汇总乐观、基准与保守风险情景',
+  portfolio_manager: '综合交易方案与风险裁决',
 };
 const agentAvatarStyles: Record<ChatAgentId, string> = {
   personal: 'bg-primary text-white',
-  fundamentals: 'bg-[#E9F1FD] text-[#2470EB] dark:bg-[#17345E]',
   market: 'bg-[#E8F7F7] text-[#168C91] dark:bg-[#123D3F]',
-  risk: 'bg-[#FFF3E3] text-[#C67A16] dark:bg-[#553711]',
-  bear: 'bg-[#EAF7ED] text-[#25853B] dark:bg-[#173D22]',
-  bull: 'bg-[#FFF1F1] text-[#D94747] dark:bg-[#641F24]',
+  sentiment: 'bg-[#FFF6E5] text-[#A86E00] dark:bg-[#5C3B00]',
+  news: 'bg-[#E9F1FD] text-[#2470EB] dark:bg-[#17345E]',
+  fundamentals: 'bg-[#E9F1FD] text-[#2470EB] dark:bg-[#17345E]',
+  research: 'bg-[#FFF1F1] text-[#D94747] dark:bg-[#641F24]',
+  trader: 'bg-[#E9F1FD] text-[#194FA6] dark:bg-[#17345E]',
+  risk: 'bg-[#FFF6E5] text-[#A86E00] dark:bg-[#5C3B00]',
+  portfolio_manager:
+    'bg-[#252525] text-white dark:bg-white dark:text-[#080808]',
 };
-
-function money(value = 0) {
-  return new Intl.NumberFormat('zh-CN', {
-    style: 'currency',
-    currency: 'CNY',
-    maximumFractionDigits: 2,
-  }).format(value);
-}
 
 function formatTime(value?: string) {
   if (!value) return '—';
@@ -212,6 +287,33 @@ function signalTone(signal?: string) {
   if (normalized.includes('sell') || normalized.includes('underweight'))
     return 'negative';
   return 'neutral';
+}
+
+function routedAgents(message: string): ChatAgentId[] {
+  const normalized = message.toLowerCase();
+  if (/买|卖|持有|仓位|入场|退出|buy|sell|hold/.test(normalized)) {
+    return [
+      'fundamentals',
+      'market',
+      'research',
+      'trader',
+      'risk',
+      'portfolio_manager',
+      'personal',
+    ];
+  }
+  if (/风险|回撤|亏损|波动/.test(normalized)) {
+    return ['risk', 'portfolio_manager', 'personal'];
+  }
+  if (/新闻|公告|消息|为什么|涨|跌/.test(normalized)) {
+    return ['market', 'news', 'fundamentals', 'sentiment', 'personal'];
+  }
+  return ['fundamentals', 'market', 'research', 'personal'];
+}
+
+function profileContext(profile: UserProfile) {
+  if (!profile.personalizationEnabled) return '用户已关闭个性化解释。';
+  return `解释方式：${profile.explanationPreference}；常用周期：${profile.typicalHorizon}；关注重点：${profile.focus}；术语偏好：${profile.terminology}。画像只用于调整表达，不得改变事实、证据权重或结论。`;
 }
 
 function EmptyState({
@@ -241,6 +343,7 @@ function EmptyState({
 
 export function TradingApp() {
   const [view, setView] = useState<AppView>('dashboard');
+  // 保留为后端兼容字段，不再向用户展示认知等级标签。
   const [mode, setMode] = useState<CognitiveMode>('intermediate');
   const [ticker, setTicker] = useState('NVDA');
   const [analysisDate, setAnalysisDate] = useState('2026-09-04');
@@ -251,20 +354,23 @@ export function TradingApp() {
     provider: string;
     api_key_configured: boolean;
   } | null>(null);
-  const [runs, setRuns] = useState<AnalysisRun[]>([]);
-  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
-  const [activeRun, setActiveRun] = useState<AnalysisRun | null>(null);
-  const [events, setEvents] = useState<AnalysisEvent[]>([]);
+  const [runs, setRuns] = useState<AnalysisRun[]>([DEMO_RUN]);
+  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
+  const [activeRun, setActiveRun] = useState<AnalysisRun | null>(DEMO_RUN);
+  const [events, setEvents] = useState<AnalysisEvent[]>(DEMO_EVENTS);
   const [chatThreads, setChatThreads] = useState<
     Record<ChatChannelId, ChatMessage[]>
   >({
     group: [],
     personal: [],
-    fundamentals: [],
     market: [],
+    sentiment: [],
+    news: [],
+    fundamentals: [],
+    research: [],
+    trader: [],
     risk: [],
-    bear: [],
-    bull: [],
+    portfolio_manager: [],
   });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -272,16 +378,17 @@ export function TradingApp() {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const refreshData = useCallback(async () => {
-    const [healthResult, runsResult, portfolioResult] =
-      await Promise.allSettled([
-        tradingApi.health(),
-        tradingApi.runs(),
-        tradingApi.portfolio(),
-      ]);
+    const [healthResult, runsResult] = await Promise.allSettled([
+      tradingApi.health(),
+      tradingApi.runs(),
+    ]);
     if (healthResult.status === 'fulfilled') setHealth(healthResult.value);
-    if (runsResult.status === 'fulfilled') setRuns(runsResult.value);
-    if (portfolioResult.status === 'fulfilled')
-      setPortfolio(portfolioResult.value);
+    if (runsResult.status === 'fulfilled') {
+      setRuns([
+        DEMO_RUN,
+        ...runsResult.value.filter((run) => run.id !== DEMO_RUN.id),
+      ]);
+    }
   }, []);
 
   useEffect(() => {
@@ -296,10 +403,25 @@ export function TradingApp() {
   }, [darkMode]);
 
   const openRun = useCallback(async (id: string) => {
+    if (id === DEMO_RUN.id) {
+      setActiveRun(DEMO_RUN);
+      setEvents(DEMO_EVENTS);
+      setMode('intermediate');
+      setView('run');
+      return;
+    }
     const run = await tradingApi.run(id);
     setActiveRun(run);
     setEvents(run.events ?? []);
     setMode(run.cognitive_mode);
+    setView('run');
+  }, []);
+
+  const openDemo = useCallback(() => {
+    setTicker(DEMO_RUN.ticker);
+    setActiveRun(DEMO_RUN);
+    setEvents(DEMO_EVENTS);
+    setMode('intermediate');
     setView('run');
   }, []);
 
@@ -381,7 +503,7 @@ export function TradingApp() {
         onToggleTheme={() => setDarkMode((value) => !value)}
       />
       <div className="mx-auto grid max-w-[1600px] grid-cols-1 md:grid-cols-[210px_minmax(0,1fr)]">
-        <Sidebar view={view} mode={mode} onNavigate={setView} />
+        <Sidebar view={view} onNavigate={setView} />
         <section className="min-w-0 px-4 pb-24 pt-6 sm:px-6 md:pb-8 lg:px-8">
           {notice && (
             <div
@@ -393,8 +515,6 @@ export function TradingApp() {
           )}
           {view === 'dashboard' && (
             <Dashboard
-              mode={mode}
-              setMode={setMode}
               ticker={ticker}
               setTicker={setTicker}
               analysisDate={analysisDate}
@@ -407,6 +527,7 @@ export function TradingApp() {
               busy={busy}
               runs={runs}
               openRun={openRun}
+              openDemo={openDemo}
             />
           )}
           {view === 'run' && (
@@ -414,13 +535,7 @@ export function TradingApp() {
               run={activeRun}
               events={events}
               progress={progress}
-              mode={mode}
-              setMode={setMode}
               onBack={() => setView('dashboard')}
-              onOrderComplete={(updated) => {
-                setPortfolio(updated);
-                setNotice('模拟订单已成交并写入本地账户');
-              }}
               onChat={() => setView('chat')}
             />
           )}
@@ -431,11 +546,14 @@ export function TradingApp() {
               onRefresh={refreshData}
             />
           )}
-          {view === 'portfolio' && <PortfolioView portfolio={portfolio} />}
+          {view === 'profile' && (
+            <ProfileView profile={profile} setProfile={setProfile} />
+          )}
           {view === 'chat' && (
             <ChatView
               run={activeRun}
               mode={mode}
+              profile={profile}
               threads={chatThreads}
               setThreads={setChatThreads}
             />
@@ -539,14 +657,11 @@ function MobileNav({
 
 function Sidebar({
   view,
-  mode,
   onNavigate,
 }: {
   view: AppView;
-  mode: CognitiveMode;
   onNavigate: (view: AppView) => void;
 }) {
-  const currentMode = modes.find((item) => item.id === mode)!;
   return (
     <aside className="hidden min-h-[calc(100vh-64px)] border-r border-border bg-card px-3 py-6 md:block">
       <nav aria-label="主导航" className="space-y-1">
@@ -561,26 +676,10 @@ function Sidebar({
           </button>
         ))}
       </nav>
-      <div className="mt-8 px-3">
-        <p className="text-[11px] font-medium text-muted-foreground">
-          当前表达模式
-        </p>
-        <div className="mt-3 rounded-xl bg-secondary p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-secondary-foreground">
-              {currentMode.label}视图
-            </span>
-            <BookOpen className="size-4 text-primary" />
-          </div>
-          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            {currentMode.description}
-          </p>
-        </div>
-      </div>
       <div className="px-3 pt-40">
         <div className="border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
           <p>本地研究环境</p>
-          <p>TradingAgents · 仅模拟交易</p>
+          <p>TradingAgents · 投研决策支持</p>
         </div>
       </div>
     </aside>
@@ -588,8 +687,6 @@ function Sidebar({
 }
 
 type DashboardProps = {
-  mode: CognitiveMode;
-  setMode: (value: CognitiveMode) => void;
   ticker: string;
   setTicker: (value: string) => void;
   analysisDate: string;
@@ -602,12 +699,13 @@ type DashboardProps = {
   busy: boolean;
   runs: AnalysisRun[];
   openRun: (id: string) => void;
+  openDemo: () => void;
 };
 
 function Dashboard(props: DashboardProps) {
   return (
-    <div className="mx-auto max-w-[1120px]">
-      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <div className="mx-auto flex max-w-[1120px] flex-col">
+      <div className="order-1 mb-8">
         <div>
           <p className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <Sparkles className="size-4 text-primary" /> 个人研究工作台
@@ -619,9 +717,87 @@ function Dashboard(props: DashboardProps) {
             专业 Agent 提供证据，个人助手负责把结论讲清楚。
           </p>
         </div>
-        <ModeSwitch value={props.mode} onChange={props.setMode} />
       </div>
-      <Card className="analysis-card gap-0 border-0 py-0">
+      <div className="order-3 mt-6 grid gap-4 lg:grid-cols-[1.35fr_.65fr]">
+        <Card className="border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="size-4 text-primary" /> AI 自选股
+            </CardTitle>
+            <CardDescription>
+              结合你的关注原因与最近研究，快速进入分析
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-y divide-border">
+              {DEMO_WATCHLIST.map((item) => (
+                <div
+                  key={item.ticker}
+                  className="flex min-h-16 items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                >
+                  <button
+                    type="button"
+                    onClick={() => props.setTicker(item.ticker)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">
+                        {item.ticker}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {item.name}
+                      </span>
+                    </span>
+                    <span className="mt-1 block truncate text-[11px] text-muted-foreground">
+                      {item.reason}
+                    </span>
+                  </button>
+                  {item.hasDemo ? (
+                    <Button size="sm" onClick={props.openDemo}>
+                      查看案例 <ChevronRight />
+                    </Button>
+                  ) : (
+                    <Badge variant="secondary">{item.status}</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="size-4 text-primary" /> 最近浏览
+            </CardTitle>
+            <CardDescription>仅使用你已授权的站内记录</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {DEMO_RECENT_VIEWS.map((item) => (
+                <button
+                  key={`${item.ticker}-${item.time}`}
+                  type="button"
+                  onClick={() => props.setTicker(item.ticker)}
+                  className="flex w-full items-start justify-between gap-3 text-left"
+                >
+                  <span>
+                    <span className="block text-xs font-semibold">
+                      {item.ticker}
+                    </span>
+                    <span className="mt-1 block text-[11px] text-muted-foreground">
+                      {item.topic}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {item.time}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <Card className="analysis-card order-2 gap-0 border-0 py-0">
         <div className="grid gap-0 lg:grid-cols-[1fr_245px]">
           <form onSubmit={props.onSubmit} className="p-5 sm:p-6">
             <div className="flex items-center justify-between">
@@ -631,7 +807,7 @@ function Dashboard(props: DashboardProps) {
                   支持美股、港股、A 股与加密资产代码
                 </p>
               </div>
-              <Badge className="bg-secondary text-primary">模拟研究</Badge>
+              <Badge className="bg-secondary text-primary">实时研究入口</Badge>
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-[minmax(0,1.25fr)_minmax(190px,.75fr)]">
               <label htmlFor="ticker" className="space-y-2">
@@ -711,11 +887,8 @@ function Dashboard(props: DashboardProps) {
           <AgentRail />
         </div>
       </Card>
-      <div className="mt-6">
-        <AssistantCard mode={props.mode} />
-      </div>
       {props.runs.length > 0 && (
-        <div className="mt-8">
+        <div className="order-4 mt-8">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-xl font-semibold">最近研究</h2>
             <span className="text-xs text-muted-foreground">本地保存</span>
@@ -731,28 +904,6 @@ function Dashboard(props: DashboardProps) {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function ModeSwitch({
-  value,
-  onChange,
-}: {
-  value: CognitiveMode;
-  onChange: (mode: CognitiveMode) => void;
-}) {
-  return (
-    <div className="flex h-10 rounded-[10px] bg-card p-1">
-      {modes.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onChange(item.id)}
-          className={`rounded-lg px-4 text-xs font-medium transition-colors ${value === item.id ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          {item.label}
-        </button>
-      ))}
     </div>
   );
 }
@@ -797,32 +948,6 @@ function AgentRail({ currentStage }: { currentStage?: string }) {
         })}
       </div>
     </div>
-  );
-}
-
-function AssistantCard({ mode }: { mode: CognitiveMode }) {
-  return (
-    <Card className="border-0 bg-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <span className="grid size-9 place-items-center rounded-[10px] bg-secondary text-primary">
-            <Bot className="size-5" />
-          </span>
-          你的个人助手
-        </CardTitle>
-        <CardDescription>
-          按{modes.find((item) => item.id === mode)?.label}模式组织研究信息
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm leading-6 text-muted-foreground">
-          从熟悉的股票开始。我会解释关键分歧，并提示哪些结论还缺少证据。
-        </p>
-        <button className="mt-4 flex min-h-11 items-center gap-1 text-sm font-medium text-primary">
-          了解认知分层 <ChevronRight className="size-4" />
-        </button>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -882,19 +1007,13 @@ function RunWorkspace({
   run,
   events,
   progress,
-  mode,
-  setMode,
   onBack,
-  onOrderComplete,
   onChat,
 }: {
   run: AnalysisRun | null;
   events: AnalysisEvent[];
   progress: number;
-  mode: CognitiveMode;
-  setMode: (mode: CognitiveMode) => void;
   onBack: () => void;
-  onOrderComplete: (portfolio: Portfolio) => void;
   onChat: () => void;
 }) {
   if (!run)
@@ -930,7 +1049,11 @@ function RunWorkspace({
             </p>
           </div>
         </div>
-        <ModeSwitch value={mode} onChange={setMode} />
+        {run.id === DEMO_RUN.id && (
+          <Badge className="bg-[#FFF6E5] text-[#A86E00] hover:bg-[#FFF6E5] dark:bg-[#5C3B00] dark:text-[#FFD36A]">
+            预置交互案例 · 非实时
+          </Badge>
+        )}
       </div>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
         <div className="space-y-5">
@@ -978,7 +1101,11 @@ function RunWorkspace({
               </p>
             </div>
           ) : run.report ? (
-            <ReportView report={run.report} mode={mode} onChat={onChat} />
+            <ReportView
+              report={run.report}
+              isDemo={run.id === DEMO_RUN.id}
+              onChat={onChat}
+            />
           ) : (
             <EmptyState
               title="Agent 正在生成研究报告"
@@ -989,9 +1116,6 @@ function RunWorkspace({
         <div className="space-y-5">
           <AgentRail currentStage={latestStage} />
           <EventTimeline events={events} />
-          {run.report && (
-            <PaperOrderForm run={run} onComplete={onOrderComplete} />
-          )}
         </div>
       </div>
     </div>
@@ -1037,21 +1161,23 @@ function EventTimeline({ events }: { events: AnalysisEvent[] }) {
 
 function ReportView({
   report,
-  mode,
+  isDemo,
   onChat,
 }: {
   report: NonNullable<AnalysisRun['report']>;
-  mode: CognitiveMode;
+  isDemo: boolean;
   onChat: () => void;
 }) {
-  const visibleSections =
-    mode === 'beginner'
-      ? ['risk_verdict']
-      : mode === 'intermediate'
-        ? ['market', 'fundamentals', 'bull_bear', 'risk_verdict']
-        : Object.keys(report.sections);
+  const visibleSections = Object.keys(report.sections);
   return (
     <div className="space-y-5">
+      {isDemo && (
+        <div className="rounded-2xl bg-[#FFF6E5] p-4 text-xs leading-5 text-[#7A5100] dark:bg-[#5C3B00] dark:text-[#FFE3A3]">
+          <strong>预置交互案例：</strong>
+          内容用于稳定展示完整产品流程，数据窗口截至 {report.analysis_date}
+          ，不代表当前行情，也不是实时投资建议。
+        </div>
+      )}
       <Card className="border-0 bg-primary text-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
@@ -1065,6 +1191,19 @@ function ReportView({
           <p className="text-sm leading-7 text-white/85">
             {report.assistant_brief}
           </p>
+          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            {[
+              ['事实', '增长驱动与竞争优势有报告依据'],
+              ['推断', '高预期能否兑现仍取决于后续数据'],
+              ['未知', '需求持续性与个人持仓信息'],
+              ['失效条件', '需求或盈利质量偏离当前假设'],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl bg-white/10 p-3">
+                <p className="text-[10px] font-medium text-white/60">{label}</p>
+                <p className="mt-1 text-xs leading-5 text-white">{value}</p>
+              </div>
+            ))}
+          </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button
               onClick={onChat}
@@ -1082,7 +1221,7 @@ function ReportView({
           <CardDescription>最终建议、条件与主要风险</CardDescription>
         </CardHeader>
         <CardContent>
-          <ReportText text={report.summary} compact={mode === 'beginner'} />
+          <ReportText text={report.summary} />
         </CardContent>
       </Card>
       {visibleSections.map((key) =>
@@ -1090,17 +1229,10 @@ function ReportView({
           <Card key={key} className="border-0">
             <CardHeader>
               <CardTitle>{sectionLabels[key] ?? key}</CardTitle>
-              <CardDescription>
-                {mode === 'expert'
-                  ? '原始 Agent 报告'
-                  : '与你当前认知模式匹配的研究证据'}
-              </CardDescription>
+              <CardDescription>原始 Agent 报告与可核验研究依据</CardDescription>
             </CardHeader>
             <CardContent>
-              <ReportText
-                text={report.sections[key]}
-                compact={mode === 'beginner'}
-              />
+              <ReportText text={report.sections[key]} />
             </CardContent>
           </Card>
         ) : null,
@@ -1109,12 +1241,10 @@ function ReportView({
   );
 }
 
-function ReportText({ text, compact }: { text: string; compact?: boolean }) {
-  const shown =
-    compact && text.length > 1400 ? `${text.slice(0, 1400)}…` : text;
+function ReportText({ text }: { text: string }) {
   return (
     <div className="report-text whitespace-pre-wrap text-[13px] leading-7 text-foreground/85">
-      {shown}
+      {text}
     </div>
   );
 }
@@ -1127,105 +1257,6 @@ function SignalPill({ signal }: { signal?: string }) {
     >
       {signal ?? 'REVIEW'}
     </span>
-  );
-}
-
-function PaperOrderForm({
-  run,
-  onComplete,
-}: {
-  run: AnalysisRun;
-  onComplete: (portfolio: Portfolio) => void;
-}) {
-  const [side, setSide] = useState<'buy' | 'sell'>('buy');
-  const [quantity, setQuantity] = useState('10');
-  const [price, setPrice] = useState('');
-  const [thesis, setThesis] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  async function submit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const result = await tradingApi.createOrder({
-        ticker: run.ticker,
-        side,
-        quantity: Number(quantity),
-        price: Number(price),
-        linked_run_id: run.id,
-        thesis,
-      });
-      onComplete(result.portfolio);
-      setThesis('');
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '下单失败');
-    } finally {
-      setLoading(false);
-    }
-  }
-  return (
-    <Card className="border-0">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BriefcaseBusiness className="size-4" /> 创建模拟订单
-        </CardTitle>
-        <CardDescription>手动输入模拟成交价，不会连接真实券商</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={submit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setSide('buy')}
-              className={`h-10 rounded-[10px] px-3 text-xs font-medium ${side === 'buy' ? 'bg-[#FFF1F1] text-[#D94747] dark:bg-[#641F24] dark:text-[#FFB3B3]' : 'bg-muted/55 text-muted-foreground'}`}
-            >
-              买入
-            </button>
-            <button
-              type="button"
-              onClick={() => setSide('sell')}
-              className={`h-10 rounded-[10px] px-3 text-xs font-medium ${side === 'sell' ? 'bg-[#EAF7ED] text-[#25853B] dark:bg-[#173D22] dark:text-[#77CF89]' : 'bg-muted/55 text-muted-foreground'}`}
-            >
-              卖出
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="number"
-              min="0.0001"
-              step="any"
-              value={quantity}
-              onChange={(event) => setQuantity(event.target.value)}
-              placeholder="数量"
-              required
-            />
-            <Input
-              type="number"
-              min="0.0001"
-              step="any"
-              value={price}
-              onChange={(event) => setPrice(event.target.value)}
-              placeholder="模拟成交价"
-              required
-            />
-          </div>
-          <Textarea
-            value={thesis}
-            onChange={(event) => setThesis(event.target.value)}
-            placeholder="记录你的下单理由（可选）"
-            className="min-h-20"
-          />
-          {error && <p className="text-[11px] text-[#ED5454]">{error}</p>}
-          <Button
-            disabled={loading}
-            className="h-12 w-full bg-primary text-white hover:bg-primary/90"
-          >
-            {loading && <LoaderCircle className="animate-spin" />}确认模拟成交
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -1267,149 +1298,212 @@ function HistoryView({
   );
 }
 
-function PortfolioView({ portfolio }: { portfolio: Portfolio | null }) {
-  if (!portfolio)
-    return (
-      <EmptyState
-        title="正在读取模拟账户"
-        description="本地后端连接后会显示模拟资金和持仓。"
-      />
-    );
+function ProfileView({
+  profile,
+  setProfile,
+}: {
+  profile: UserProfile;
+  setProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
+}) {
+  const [inferences, setInferences] = useState([
+    '经常关注财报后的基本面变化',
+    '偏好先看反面证据与失效条件',
+  ]);
+
+  function update<K extends keyof UserProfile>(key: K, value: UserProfile[K]) {
+    setProfile((current) => ({ ...current, [key]: value }));
+  }
+
   return (
     <div className="mx-auto max-w-[1120px]">
       <div className="mb-6">
-        <p className="text-xs font-medium text-muted-foreground">模拟组合</p>
+        <p className="text-xs font-medium text-muted-foreground">个人中心</p>
         <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em]">
-          模拟交易
+          我的投研
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          所有订单均为本地模拟，不会触达真实资金。
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          个人画像只帮助 Agent
+          调整解释顺序、术语和详略，不会改变市场事实、证据权重或专业结论。
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          ['总资产', money(portfolio.total_value)],
-          ['可用现金', money(portfolio.cash)],
-          ['持仓市值', money(portfolio.market_value)],
-          [
-            '累计收益',
-            `${portfolio.total_return >= 0 ? '+' : ''}${portfolio.total_return.toFixed(2)}%`,
-          ],
-        ].map(([label, value], index) => (
-          <Card
-            key={label}
-            size="sm"
-            className={`border-0 ${index === 0 ? 'bg-primary text-white' : ''}`}
-          >
-            <CardContent>
-              <p
-                className={`text-[11px] ${index === 0 ? 'text-white/65' : 'text-muted-foreground'}`}
-              >
-                {label}
-              </p>
-              <p
-                className={`mt-2 text-xl font-semibold tabular-nums ${index === 0 ? 'text-[26px] text-white' : index === 3 ? (portfolio.total_return >= 0 ? 'text-[#ED5454]' : 'text-[#35A34D]') : ''}`}
-              >
-                {index === 3
-                  ? `${portfolio.total_return >= 0 ? '上涨 ' : '下跌 '}${value}`
-                  : value}
-              </p>
+
+      <div className="grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
+        <Card className="border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserRound className="size-4 text-primary" /> 我的解释偏好
+            </CardTitle>
+            <CardDescription>
+              你可以随时修改，下一次对话立即生效
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium">信息展开方式</span>
+                <NativeSelect
+                  value={profile.explanationPreference}
+                  onChange={(event) =>
+                    update('explanationPreference', event.target.value)
+                  }
+                  className="w-full"
+                >
+                  <NativeSelectOption>先结论，后依据</NativeSelectOption>
+                  <NativeSelectOption>先证据，后结论</NativeSelectOption>
+                  <NativeSelectOption>按争议点逐项展开</NativeSelectOption>
+                </NativeSelect>
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-medium">常用关注周期</span>
+                <NativeSelect
+                  value={profile.typicalHorizon}
+                  onChange={(event) =>
+                    update('typicalHorizon', event.target.value)
+                  }
+                  className="w-full"
+                >
+                  <NativeSelectOption>短期（1–4 周）</NativeSelectOption>
+                  <NativeSelectOption>中期（1–6 个月）</NativeSelectOption>
+                  <NativeSelectOption>中长期（6–24 个月）</NativeSelectOption>
+                </NativeSelect>
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-medium">优先关注</span>
+                <NativeSelect
+                  value={profile.focus}
+                  onChange={(event) => update('focus', event.target.value)}
+                  className="w-full"
+                >
+                  <NativeSelectOption>基本面与下行风险</NativeSelectOption>
+                  <NativeSelectOption>价格趋势与事件催化</NativeSelectOption>
+                  <NativeSelectOption>多空分歧与未知信息</NativeSelectOption>
+                </NativeSelect>
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-medium">专业术语</span>
+                <NativeSelect
+                  value={profile.terminology}
+                  onChange={(event) =>
+                    update('terminology', event.target.value)
+                  }
+                  className="w-full"
+                >
+                  <NativeSelectOption>首次出现时解释</NativeSelectOption>
+                  <NativeSelectOption>直接使用并附注</NativeSelectOption>
+                  <NativeSelectOption>只在必要时使用</NativeSelectOption>
+                </NativeSelect>
+              </label>
+            </div>
+            <div className="mt-6 rounded-xl bg-secondary p-4 text-xs leading-6 text-secondary-foreground">
+              <strong>当前解释方式：</strong>
+              {profile.explanationPreference}；重点关注{profile.focus}
+              ；专业术语会
+              {profile.terminology}。
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-5">
+          <Card className="border-0">
+            <CardHeader>
+              <CardTitle>数据授权</CardTitle>
+              <CardDescription>关闭后仍可使用标准投研分析</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">个性化解释</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    允许 Agent 参考你明确设置的偏好
+                  </p>
+                </div>
+                <Switch
+                  checked={profile.personalizationEnabled}
+                  onCheckedChange={(checked) =>
+                    update('personalizationEnabled', checked)
+                  }
+                  aria-label="启用个性化解释"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
+                <div>
+                  <p className="text-sm font-medium">站内浏览记录</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    用于关联自选股和最近关注主题
+                  </p>
+                </div>
+                <Switch
+                  checked={profile.historyEnabled}
+                  onCheckedChange={(checked) =>
+                    update('historyEnabled', checked)
+                  }
+                  aria-label="允许使用站内浏览记录"
+                />
+              </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
-      <Card className="mt-5 border-0">
-        <CardHeader>
-          <CardTitle>当前持仓</CardTitle>
-          <CardDescription>{portfolio.positions.length} 个标的</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {portfolio.positions.length === 0 ? (
-            <p className="py-8 text-center text-xs text-muted-foreground">
-              还没有模拟持仓。完成分析后可以创建第一笔模拟订单。
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>标的</TableHead>
-                  <TableHead>数量</TableHead>
-                  <TableHead>平均成本</TableHead>
-                  <TableHead>最新模拟价</TableHead>
-                  <TableHead className="text-right">浮动盈亏</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {portfolio.positions.map((position) => {
-                  const pnl =
-                    position.quantity *
-                    (position.last_price - position.average_price);
-                  return (
-                    <TableRow key={position.ticker}>
-                      <TableCell className="font-data font-semibold">
-                        {position.ticker}
-                      </TableCell>
-                      <TableCell>{position.quantity}</TableCell>
-                      <TableCell>{money(position.average_price)}</TableCell>
-                      <TableCell>{money(position.last_price)}</TableCell>
-                      <TableCell
-                        className={`text-right font-medium tabular-nums ${pnl >= 0 ? 'text-[#ED5454]' : 'text-[#35A34D]'}`}
+
+          <Card className="border-0">
+            <CardHeader>
+              <CardTitle>AI 推测</CardTitle>
+              <CardDescription>不是用户事实，可随时删除或纠正</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {inferences.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  当前没有保留的 AI 推测标签。
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {inferences.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-center justify-between gap-3 rounded-xl bg-muted/55 px-3 py-2.5"
+                    >
+                      <span className="text-xs">AI 推测 · {item}</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setInferences((current) =>
+                            current.filter((value) => value !== item),
+                          )
+                        }
+                        className="min-h-9 shrink-0 text-[11px] font-medium text-primary"
                       >
-                        {pnl >= 0 ? '+' : '-'}
-                        {money(Math.abs(pnl))}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                        删除
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <Card className="mt-5 border-0">
         <CardHeader>
-          <CardTitle>订单记录</CardTitle>
-          <CardDescription>每笔订单都可以关联分析和下单理由</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Bookmark className="size-4 text-primary" /> 画像依据
+          </CardTitle>
+          <CardDescription>只展示产品内已经授权的输入</CardDescription>
         </CardHeader>
         <CardContent>
-          {portfolio.orders.length === 0 ? (
-            <p className="py-8 text-center text-xs text-muted-foreground">
-              暂无订单
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {portfolio.orders.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between rounded-lg bg-muted/45 p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    {order.side === 'buy' ? (
-                      <TrendingUp className="size-4 text-[#ED5454]" />
-                    ) : (
-                      <TrendingDown className="size-4 text-[#35A34D]" />
-                    )}
-                    <div>
-                      <p className="font-data text-xs font-semibold">
-                        {order.ticker} ·{' '}
-                        {order.side === 'buy' ? '买入' : '卖出'}{' '}
-                        {order.quantity}
-                      </p>
-                      <p className="mt-1 text-[10px] text-muted-foreground">
-                        {order.thesis || '未记录下单理由'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-data text-xs">{money(order.value)}</p>
-                    <p className="mt-1 text-[10px] text-muted-foreground">
-                      {formatTime(order.created_at)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              ['自选股', `${DEMO_WATCHLIST.length} 个关注标的`],
+              ['最近浏览', `${DEMO_RECENT_VIEWS.length} 条可见记录`],
+              ['分析记录', '1 份预置案例'],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl bg-muted/45 p-4">
+                <p className="text-[11px] text-muted-foreground">{label}</p>
+                <p className="mt-2 text-sm font-semibold">{value}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-[11px] leading-5 text-muted-foreground">
+            系统不会根据浏览记录推断你的资产规模、真实持仓、成本或风险承受能力；买卖类问题需要当次确认。
+          </p>
         </CardContent>
       </Card>
     </div>
@@ -1419,11 +1513,13 @@ function PortfolioView({ portfolio }: { portfolio: Portfolio | null }) {
 function ChatView({
   run,
   mode,
+  profile,
   threads,
   setThreads,
 }: {
   run: AnalysisRun | null;
   mode: CognitiveMode;
+  profile: UserProfile;
   threads: Record<ChatChannelId, ChatMessage[]>;
   setThreads: React.Dispatch<
     React.SetStateAction<Record<ChatChannelId, ChatMessage[]>>
@@ -1435,8 +1531,17 @@ function ChatView({
     Partial<Record<ChatChannelId, boolean>>
   >({});
   const [error, setError] = useState('');
-  const activeMessages = threads[channel];
+  const runId = run?.id;
+  const isDemoGroup = channel === 'group' && runId === DEMO_RUN.id;
+  const storedMessages = threads[channel].filter(
+    (item) => item.runId === runId,
+  );
+  const activeMessages = isDemoGroup
+    ? [...demoGroupConversation, ...storedMessages]
+    : storedMessages;
   const loading = Boolean(loadingChannels[channel]);
+  const latestMessageFor = (channelId: ChatAgentId) =>
+    threads[channelId].findLast((item) => item.runId === runId)?.content;
 
   function selectChannel(nextChannel: ChatChannelId) {
     setChannel(nextChannel);
@@ -1459,44 +1564,97 @@ function ChatView({
       ...current,
       [activeChannel]: [
         ...current[activeChannel],
-        { role: 'user', content: outgoing },
+        { role: 'user', content: outgoing, runId },
       ],
     }));
     setMessage('');
     setLoadingChannels((current) => ({ ...current, [activeChannel]: true }));
     setError('');
     try {
+      if (run?.id === DEMO_RUN.id) {
+        const demoAgents =
+          activeChannel === 'group' ? routedAgents(outgoing) : [activeChannel];
+        await new Promise((resolve) => window.setTimeout(resolve, 360));
+        setThreads((current) => ({
+          ...current,
+          [activeChannel]: [
+            ...current[activeChannel],
+            ...demoAgents.map((agent) => ({
+              role: 'assistant' as const,
+              agent,
+              runId,
+              content:
+                DEMO_AGENT_REPLIES[agent] ??
+                '当前预置案例没有覆盖这个角色的更多证据。请返回总工作群，或启动实时服务继续分析。',
+            })),
+          ],
+        }));
+        return;
+      }
+
       if (activeChannel === 'group') {
+        const selectedAgents = routedAgents(outgoing);
+        const professionalAgents = selectedAgents.filter(
+          (agentId) => agentId !== 'personal',
+        );
         const results = await Promise.allSettled(
-          chatAgentIds.map(async (agentId) => {
+          professionalAgents.map(async (agentId) => {
             const response = await tradingApi.chat({
               run_id: run?.id,
               agent: agentId,
               message: outgoing,
               cognitive_mode: mode,
+              user_context: profileContext(profile),
               history,
             });
-            setThreads((current) => ({
-              ...current,
-              group: [
-                ...current.group,
-                {
-                  role: 'assistant',
-                  agent: response.agent as ChatAgentId,
-                  content: response.answer,
-                },
-              ],
-            }));
+            return {
+              role: 'assistant' as const,
+              agent: response.agent as ChatAgentId,
+              runId,
+              content: response.answer,
+            };
           }),
         );
-        const failedCount = results.filter(
-          (result) => result.status === 'rejected',
-        ).length;
-        if (failedCount === chatAgentIds.length) {
+        const replies = results.flatMap((result) =>
+          result.status === 'fulfilled' ? [result.value] : [],
+        );
+        const failedCount = results.length - replies.length;
+        if (replies.length === 0) {
           throw results[0].status === 'rejected'
             ? results[0].reason
             : new Error('团队暂时无法回答');
         }
+        setThreads((current) => ({
+          ...current,
+          group: [...current.group, ...replies],
+        }));
+
+        const summary = await tradingApi.chat({
+          run_id: run?.id,
+          agent: 'personal',
+          message: `请基于专业角色回复总结用户的问题：${outgoing}`,
+          cognitive_mode: mode,
+          user_context: profileContext(profile),
+          history: [
+            ...history,
+            ...replies.map((reply) => ({
+              role: 'assistant' as const,
+              content: `[${agentLabels[reply.agent]}] ${reply.content}`,
+            })),
+          ],
+        });
+        setThreads((current) => ({
+          ...current,
+          group: [
+            ...current.group,
+            {
+              role: 'assistant',
+              agent: 'personal',
+              runId,
+              content: summary.answer,
+            },
+          ],
+        }));
         if (failedCount > 0) {
           setError(`${failedCount} 位 Agent 暂时未能回复，其他回复已送达。`);
         }
@@ -1506,6 +1664,7 @@ function ChatView({
           agent: activeChannel,
           message: outgoing,
           cognitive_mode: mode,
+          user_context: profileContext(profile),
           history,
         });
         setThreads((current) => ({
@@ -1515,6 +1674,7 @@ function ChatView({
             {
               role: 'assistant',
               agent: response.agent as ChatAgentId,
+              runId,
               content: response.answer,
             },
           ],
@@ -1534,7 +1694,7 @@ function ChatView({
     channel === 'group' ? '投研总工作群' : agentLabels[channel];
   const currentDescription =
     channel === 'group'
-      ? `你、个人助手与 5 位专业分析师${run ? ` · ${run.ticker}` : ''}`
+      ? `你、个人助手与 8 位协作角色${run ? ` · ${run.ticker}` : ''}`
       : `${agentDescriptions[channel]}${run ? ` · 已关联 ${run.ticker}` : ''}`;
 
   return (
@@ -1572,7 +1732,7 @@ function ChatView({
                   投研总工作群
                 </span>
                 <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
-                  你 + 6 位 Agent
+                  你 + 9 位 Agent
                 </span>
               </span>
               {loadingChannels.group && (
@@ -1588,7 +1748,7 @@ function ChatView({
                 {chatAgentIds.length} 位成员
               </span>
             </div>
-            <div className="space-y-1">
+            <div className="max-h-[490px] space-y-1 overflow-y-auto pr-1">
               {chatAgentIds.map((agentId) => (
                 <button
                   key={agentId}
@@ -1606,8 +1766,7 @@ function ChatView({
                       {agentLabels[agentId]}
                     </span>
                     <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
-                      {threads[agentId].at(-1)?.content ??
-                        agentDescriptions[agentId]}
+                      {latestMessageFor(agentId) ?? agentDescriptions[agentId]}
                     </span>
                   </span>
                   {loadingChannels[agentId] && (
@@ -1650,13 +1809,21 @@ function ChatView({
                       </AvatarFallback>
                     </Avatar>
                   ))}
-                  <AvatarGroupCount>+3</AvatarGroupCount>
+                  <AvatarGroupCount>+6</AvatarGroupCount>
                 </AvatarGroup>
               )}
             </div>
           </CardHeader>
           <CardContent>
             <div className="h-[430px] space-y-5 overflow-y-auto bg-background/55 p-4 sm:p-5">
+              {isDemoGroup && (
+                <div className="flex flex-wrap items-center gap-2 rounded-xl bg-[#FFF6E5] px-3 py-2.5 text-[11px] leading-5 text-[#7A5100] dark:bg-[#5C3B00] dark:text-[#FFE3A3]">
+                  <Badge className="bg-white/75 text-[#7A5100] hover:bg-white/75 dark:bg-white/15 dark:text-[#FFE3A3]">
+                    预置案例对话 · 非实时
+                  </Badge>
+                  <span>基于 NVDA 2025-02-27 演示报告，不代表当前行情</span>
+                </div>
+              )}
               {activeMessages.length === 0 && (
                 <div className="grid h-full place-items-center text-center">
                   <div className="max-w-sm">
@@ -1674,7 +1841,7 @@ function ChatView({
                     </p>
                     <p className="mt-2 text-xs leading-5 text-muted-foreground">
                       {channel === 'group'
-                        ? '个人助手和全部专业分析师都会收到消息，并从各自职责出发回复。'
+                        ? '个人助手会按问题调度相关角色，专业意见完成后再汇总共识、分歧与未知。'
                         : `此窗口有独立的对话记录，${agentLabels[channel]}会结合之前的聊天继续回答。`}
                     </p>
                   </div>
@@ -1713,6 +1880,26 @@ function ChatView({
                 </div>
               )}
             </div>
+            {isDemoGroup && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-medium text-muted-foreground">
+                  继续模拟追问
+                </span>
+                {[
+                  '结合这份报告，现在适合买入吗？',
+                  '多头和空头的核心分歧是什么？',
+                ].map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => setMessage(prompt)}
+                    className="min-h-9 rounded-[10px] border border-border-visible bg-card px-3 text-[11px] text-foreground hover:bg-muted"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
             <form onSubmit={submit} className="mt-4">
               <div className="flex gap-2">
                 <Input
@@ -1735,12 +1922,10 @@ function ChatView({
               <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-muted-foreground">
                 <span>
                   {channel === 'group'
-                    ? '本条消息将通知全部 6 位 Agent'
+                    ? '个人助手将按问题调度相关角色，不进行多数投票'
                     : '此单聊拥有独立上下文'}
                 </span>
-                <span>
-                  {modes.find((item) => item.id === mode)?.label}表达模式
-                </span>
+                <span>参考：已关联报告 + 个人画像</span>
               </div>
             </form>
             {error && (

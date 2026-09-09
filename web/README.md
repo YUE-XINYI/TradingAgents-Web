@@ -1,6 +1,6 @@
 # 认知交易舱 MVP
 
-TradingAgents 的 Web 工作台，包含多 Agent 分析、实时进度、认知分层报告、模拟交易和 Agent 协作室。
+TradingAgents 的 Web 投研助手，包含 AI 自选股、个人投研画像、多 Agent 分析、实时进度、可信报告和 Agent 协作室。
 
 ## 启动
 
@@ -37,7 +37,7 @@ VITE_API_URL=https://你的后端域名
 
 不要把 `DEEPSEEK_API_KEY` 放进 `VITE_API_URL` 或任何以 `VITE_` 开头的变量。`VITE_` 变量会进入浏览器构建产物。DeepSeek Key 只能配置在后端运行环境。
 
-仅部署 Netlify 前端时，工作台界面可以公开访问，但分析、聊天、模拟交易和历史数据需要另行部署 Python API 后才能使用。
+仅部署 Netlify 前端时，预置交互案例、个人画像和协作室案例可以直接演示。实时分析、自定义实时聊天和服务端历史数据需要另行部署 Python API 后才能使用。预置案例在界面中明确标为非实时内容。
 
 后端上线后，还需要在它的环境变量中设置允许访问的前端域名：
 

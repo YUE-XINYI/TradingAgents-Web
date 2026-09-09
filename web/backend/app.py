@@ -61,15 +61,6 @@ class AnalysisRequest(BaseModel):
     ]
 
 
-class OrderRequest(BaseModel):
-    ticker: str = Field(min_length=1, max_length=24, pattern=r"^[A-Za-z0-9.\-^=]+$")
-    side: Literal["buy", "sell"]
-    quantity: float = Field(gt=0)
-    price: float = Field(gt=0)
-    linked_run_id: str | None = None
-    thesis: str = Field(default="", max_length=600)
-
-
 class ChatHistoryMessage(BaseModel):
     role: Literal["user", "assistant"]
     content: str = Field(min_length=1, max_length=4000)
@@ -77,9 +68,26 @@ class ChatHistoryMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     run_id: str | None = None
-    agent: Literal["personal", "fundamentals", "market", "risk", "bear", "bull"] = "personal"
+    agent: Literal[
+        "personal",
+        "market",
+        "sentiment",
+        "news",
+        "fundamentals",
+        "research",
+        "bull",
+        "bear",
+        "research_manager",
+        "trader",
+        "risk",
+        "risk_aggressive",
+        "risk_neutral",
+        "risk_conservative",
+        "portfolio_manager",
+    ] = "personal"
     message: str = Field(min_length=1, max_length=2000)
     cognitive_mode: Literal["beginner", "intermediate", "expert"] = "intermediate"
+    user_context: str = Field(default="用户未授权个人画像。", max_length=3000)
     history: list[ChatHistoryMessage] = Field(default_factory=list, max_length=20)
 
 
@@ -192,7 +200,7 @@ def build_report(ticker: str, analysis_date: str, signal: str, state: dict[str, 
         "analysis_date": analysis_date,
         "signal": signal,
         "summary": final_decision,
-        "assistant_brief": f"多 Agent 团队对 {ticker} 的最终评级为 {signal}。先核对主要证据与风险，再决定是否创建模拟订单。",
+        "assistant_brief": f"多 Agent 团队对 {ticker} 的最终评级为 {signal}。请先核对主要证据、相反观点与失效条件，再形成自己的判断。",
         "sections": {
             "market": clean_text(state.get("market_report")),
             "fundamentals": clean_text(state.get("fundamentals_report")),
@@ -371,92 +379,37 @@ async def stream_run_events(run_id: str) -> StreamingResponse:
     return StreamingResponse(generator(), media_type="text/event-stream")
 
 
-def portfolio_payload() -> dict[str, Any]:
-    with db() as connection:
-        account = connection.execute("SELECT * FROM account WHERE id=1").fetchone()
-        positions = [dict(row) for row in connection.execute("SELECT * FROM positions ORDER BY ticker")]
-        orders = [dict(row) for row in connection.execute("SELECT * FROM orders ORDER BY created_at DESC LIMIT 50")]
-    market_value = sum(item["quantity"] * item["last_price"] for item in positions)
-    cost = sum(item["quantity"] * item["average_price"] for item in positions)
-    total = account["cash"] + market_value
-    return {
-        "initial_cash": account["initial_cash"],
-        "cash": account["cash"],
-        "market_value": market_value,
-        "total_value": total,
-        "total_return": (total / account["initial_cash"] - 1) * 100,
-        "unrealized_pnl": market_value - cost,
-        "positions": positions,
-        "orders": orders,
-    }
-
-
-@app.get("/api/portfolio")
-def get_portfolio() -> dict[str, Any]:
-    return portfolio_payload()
-
-
-@app.post("/api/orders", status_code=201)
-def create_order(request: OrderRequest) -> dict[str, Any]:
-    ticker = request.ticker.upper().strip()
-    value = request.quantity * request.price
-    with db() as connection:
-        account = connection.execute("SELECT cash FROM account WHERE id=1").fetchone()
-        position = connection.execute("SELECT * FROM positions WHERE ticker=?", (ticker,)).fetchone()
-        if request.side == "buy":
-            if account["cash"] < value:
-                raise HTTPException(status_code=400, detail="模拟账户可用资金不足")
-            old_quantity = position["quantity"] if position else 0
-            old_cost = old_quantity * position["average_price"] if position else 0
-            new_quantity = old_quantity + request.quantity
-            average_price = (old_cost + value) / new_quantity
-            connection.execute("UPDATE account SET cash=cash-? WHERE id=1", (value,))
-            connection.execute(
-                """INSERT INTO positions (ticker, quantity, average_price, last_price, updated_at)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(ticker) DO UPDATE SET quantity=excluded.quantity,
-                average_price=excluded.average_price, last_price=excluded.last_price, updated_at=excluded.updated_at""",
-                (ticker, new_quantity, average_price, request.price, now_iso()),
-            )
-        else:
-            if not position or position["quantity"] < request.quantity:
-                raise HTTPException(status_code=400, detail="模拟持仓数量不足")
-            remaining = position["quantity"] - request.quantity
-            connection.execute("UPDATE account SET cash=cash+? WHERE id=1", (value,))
-            if remaining <= 0:
-                connection.execute("DELETE FROM positions WHERE ticker=?", (ticker,))
-            else:
-                connection.execute(
-                    "UPDATE positions SET quantity=?, last_price=?, updated_at=? WHERE ticker=?",
-                    (remaining, request.price, now_iso(), ticker),
-                )
-        order_id = uuid.uuid4().hex
-        connection.execute(
-            """INSERT INTO orders
-            (id, ticker, side, quantity, price, value, status, linked_run_id, thesis, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, 'filled', ?, ?, ?)""",
-            (
-                order_id,
-                ticker,
-                request.side,
-                request.quantity,
-                request.price,
-                value,
-                request.linked_run_id,
-                request.thesis,
-                now_iso(),
-            ),
-        )
-    return {"order_id": order_id, "portfolio": portfolio_payload()}
-
-
 AGENT_PROMPTS = {
-    "personal": "你是用户的个人研究助手。根据用户的认知层级，用清楚、诚实、可行动的中文解释专业结论，主动指出不确定性。",
+    "personal": "你是用户的个人研究助手。用用户能理解的中文总结专业角色的共识、分歧、未知和失效条件，并在买卖问题中确认持仓状态、周期和风险偏好。不要按 Agent 数量投票。",
+    "market": "你是 TradingAgents 的市场分析师，只围绕价格、趋势、成交与技术指标回答，避免把指标表述为确定预测。",
+    "sentiment": "你是 TradingAgents 的情绪分析师，分析讨论热度、预期与分歧，但不能把市场情绪当成价格预测。",
+    "news": "你是 TradingAgents 的新闻分析师，只围绕公司新闻、公告、宏观事件及其影响路径回答，并说明时效和相关性。",
     "fundamentals": "你是基本面分析师，只围绕财务、估值、商业模式和长期竞争力回答，并区分事实与推断。",
-    "market": "你是技术与市场分析师，只围绕价格、趋势、成交与技术指标回答，避免把指标表述为确定预测。",
-    "risk": "你是风险经理，优先寻找下行风险、流动性风险、仓位风险和论证盲点。",
-    "bear": "你是看空研究员，负责挑战现有看多逻辑，提出最强反例和需要验证的证据。",
-    "bull": "你是看多研究员，负责寻找上涨驱动，但必须明确触发条件与证伪条件。",
+    "research": "你是用户可见的研究员。后台已经由多头研究员、空头研究员和研究经理完成讨论；你要同时呈现支持逻辑、反对逻辑、核心分歧、研究结论和失效条件，不能只选一边。",
+    "bull": "你是 TradingAgents 的多头研究员，负责构建最强支持逻辑，但必须说明关键假设、反面证据与证伪条件。",
+    "bear": "你是 TradingAgents 的空头研究员，负责挑战看多逻辑，提出最强反例和需要验证的证据。",
+    "research_manager": "你是 TradingAgents 的研究经理，评估多空证据，指出关键分歧并形成有条件的研究判断。",
+    "trader": "你是 TradingAgents 的交易员，把研究判断转成条件化方案；信息不足时要求补充，不生成无条件仓位或交易指令。",
+    "risk": "你是用户可见的风险分析师。后台已经完成激进、中性和保守三种风险讨论；你要汇总乐观、基准、保守情景、最大下行风险和风险结论。",
+    "risk_aggressive": "你是 TradingAgents 的激进风险分析师，评估高风险高回报情景，同时明确代价和失效条件。",
+    "risk_neutral": "你是 TradingAgents 的中性风险分析师，平衡收益、风险与替代路径，挑战过度乐观和过度保守观点。",
+    "risk_conservative": "你是 TradingAgents 的保守风险分析师，优先识别损失、波动、流动性和外部风险。",
+    "portfolio_manager": "你是 TradingAgents 的投资组合经理，综合交易方案和风险辩论给出最终有条件裁决，不替用户执行交易。",
+}
+
+AGENT_SECTION = {
+    "market": "market",
+    "sentiment": "sentiment",
+    "news": "news",
+    "fundamentals": "fundamentals",
+    "bull": "bull_bear",
+    "bear": "bull_bear",
+    "research_manager": "research_verdict",
+    "trader": "trader_plan",
+    "risk_aggressive": "risk_debate",
+    "risk_neutral": "risk_debate",
+    "risk_conservative": "risk_debate",
+    "portfolio_manager": "risk_verdict",
 }
 
 
@@ -467,7 +420,38 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         with db() as connection:
             row = connection.execute("SELECT report_json FROM runs WHERE id=?", (request.run_id,)).fetchone()
         if row and row["report_json"]:
-            report_context = row["report_json"][:14000]
+            full_report = json.loads(row["report_json"])
+            section_key = AGENT_SECTION.get(request.agent)
+            if request.agent == "research":
+                sections = full_report.get("sections", {})
+                role_section = {
+                    "多空辩论": sections.get("bull_bear", ""),
+                    "研究经理结论": sections.get("research_verdict", ""),
+                }
+            elif request.agent == "risk":
+                sections = full_report.get("sections", {})
+                role_section = {
+                    "三类风险讨论": sections.get("risk_debate", ""),
+                    "风险裁决": sections.get("risk_verdict", ""),
+                }
+            elif section_key:
+                role_section = full_report.get("sections", {}).get(section_key, "")
+            else:
+                role_section = None
+
+            if role_section is not None:
+                report_context = json.dumps(
+                    {
+                        "ticker": full_report.get("ticker"),
+                        "analysis_date": full_report.get("analysis_date"),
+                        "signal": full_report.get("signal"),
+                        "role_section": role_section,
+                        "final_summary": full_report.get("summary", ""),
+                    },
+                    ensure_ascii=False,
+                )[:14000]
+            else:
+                report_context = row["report_json"][:14000]
 
     mode_instruction = {
         "beginner": "用户是入门阶段：避免术语堆砌，每个专业词都要解释。",
@@ -494,7 +478,10 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
                     "content": AGENT_PROMPTS[request.agent]
                     + "\n"
                     + mode_instruction
-                    + "\n只展示可核验观点、证据、假设和结论摘要，不提供隐藏思维链。",
+                    + "\n用户上下文："
+                    + request.user_context
+                    + "\n用户画像只能改变解释顺序、术语、详略和举例，不得改变事实、证据权重或专业结论。"
+                    + "\n回答必须依次包含：角色视角、已确认事实、分析推断、相反证据、关键假设、失效条件、置信度与报告依据。不提供隐藏思维链。",
                 },
                 {"role": "system", "content": "关联研究报告：\n" + report_context},
                 *history_messages,

@@ -16,6 +16,8 @@ eggs/
 .eggs/
 lib/
 lib64/
+!web/lib/
+!web/lib/*.ts
 parts/
 sdist/
 var/
@@ -25,6 +27,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+*.tsbuildinfo
 
 # PyInstaller
 #   Usually these files are written by a python script from a template
@@ -221,3 +224,9 @@ __marimo__/
 # Enterprise env file (secrets) and generated run reports
 .env.enterprise
 reports/
+
+# Local packaging artifacts
+.DS_Store
+submission/SPRINT_STATUS.md
+/认知交易舱_腾讯AI实战提交包/
+/认知交易舱_腾讯AI实战提交包.zip

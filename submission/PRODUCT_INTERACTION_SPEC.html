@@ -1,0 +1,2147 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="TradingAgents 多视角 AI 投研助手的产品定位、交互流程、人机协作与成立判断说明。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&amp;family=Noto+Sans+SC:wght@400;500;600&amp;display=swap"
+      rel="stylesheet"
+    />
+    <title>产品与交互方案｜认知交易舱</title>
+    <style>
+      :root {
+        --background: #f7f7f7;
+        --surface1: #ffffff;
+        --surface2: #e9f1fd;
+        --surface3: #eaeaea;
+        --border: #eaeaea;
+        --border-visible: #d6d6d6;
+        --text1: #080808;
+        --text2: #595959;
+        --text3: #a8a8a8;
+        --accent: #2470eb;
+        --accent-hover: #1e5fc7;
+        --success: #35a34d;
+        --success-bg: #edf8ef;
+        --warning: #f2a100;
+        --warning-bg: #fff6e5;
+        --error: #ed5454;
+        --error-bg: #fff1f1;
+        --font-display: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+          sans-serif;
+        --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+          sans-serif;
+        --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        --radius-control: 10px;
+        --radius-component: 16px;
+        --radius-container: 20px;
+        --ease: cubic-bezier(0.2, 0, 0, 1);
+      }
+
+      [data-theme="dark"] {
+        --background: #080808;
+        --surface1: #141414;
+        --surface2: #252525;
+        --surface3: #3d3d3d;
+        --border: #252525;
+        --border-visible: #3d3d3d;
+        --text1: #ffffff;
+        --text2: #a8a8a8;
+        --text3: #7a7a7a;
+        --accent: #4d94f7;
+        --accent-hover: #2470eb;
+        --success-bg: #153d20;
+        --warning-bg: #5c3b00;
+        --error-bg: #641f24;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 88px;
+      }
+
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--text1);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.75;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      a {
+        font: inherit;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid var(--surface2);
+        outline-offset: 2px;
+      }
+
+      .material-symbols-rounded {
+        font-size: 21px;
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid var(--border);
+        background: color-mix(in srgb, var(--surface1) 94%, transparent);
+        backdrop-filter: blur(12px);
+      }
+
+      .topbar-inner {
+        width: min(1420px, calc(100% - 40px));
+        height: 64px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        border-radius: var(--radius-control);
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .brand-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+
+      .brand-subtitle {
+        margin: 2px 0 0;
+        color: var(--text2);
+        font-size: 11px;
+        line-height: 1.3;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .button {
+        min-height: 44px;
+        padding: 0 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border: 0;
+        border-radius: var(--radius-control);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition:
+          background 160ms var(--ease),
+          transform 160ms var(--ease);
+      }
+
+      .button:active {
+        transform: translateY(1px);
+      }
+
+      .button-primary {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .button-primary:hover {
+        background: var(--accent-hover);
+      }
+
+      .button-secondary {
+        border: 1px solid var(--border-visible);
+        background: var(--surface1);
+        color: var(--text1);
+      }
+
+      .button-secondary:hover {
+        background: var(--surface3);
+      }
+
+      .shell {
+        width: min(1420px, calc(100% - 40px));
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 32px;
+      }
+
+      .side-nav {
+        position: sticky;
+        top: 88px;
+        align-self: start;
+        padding: 24px 0;
+      }
+
+      .side-label {
+        margin: 0 0 12px 12px;
+        color: var(--text3);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .side-nav a {
+        min-height: 44px;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: var(--radius-control);
+        color: var(--text2);
+        font-size: 13px;
+        transition:
+          color 160ms var(--ease),
+          background 160ms var(--ease);
+      }
+
+      .side-nav a:hover,
+      .side-nav a.active {
+        background: var(--surface2);
+        color: var(--accent);
+      }
+
+      .side-nav a.active .material-symbols-rounded {
+        font-variation-settings:
+          "FILL" 1,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+
+      .side-note {
+        margin-top: 32px;
+        padding: 16px 12px 0;
+        border-top: 1px solid var(--border);
+        color: var(--text2);
+        font-size: 11px;
+        line-height: 1.7;
+      }
+
+      main {
+        min-width: 0;
+        padding: 32px 0 72px;
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        padding: 48px;
+        border-radius: var(--radius-container);
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        right: -54px;
+        bottom: -74px;
+        width: 240px;
+        height: 240px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 38px rgba(255, 255, 255, 0.05),
+          0 0 0 78px rgba(255, 255, 255, 0.035);
+      }
+
+      .eyebrow {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text2);
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .hero .eyebrow {
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      h1 {
+        max-width: 830px;
+        margin: 20px 0 0;
+        font-size: clamp(34px, 5vw, 52px);
+        font-weight: 600;
+        line-height: 1.14;
+        letter-spacing: -0.025em;
+      }
+
+      .hero-lead {
+        max-width: 760px;
+        margin: 20px 0 0;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 17px;
+        line-height: 1.8;
+      }
+
+      .hero-meta {
+        position: relative;
+        z-index: 1;
+        margin-top: 36px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        overflow: hidden;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.17);
+      }
+
+      .hero-stat {
+        min-height: 98px;
+        padding: 18px 20px;
+        background: rgba(8, 8, 8, 0.09);
+      }
+
+      .hero-stat strong {
+        display: block;
+        font-size: 24px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .hero-stat span {
+        display: block;
+        margin-top: 5px;
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 12px;
+      }
+
+      .section {
+        margin-top: 48px;
+      }
+
+      .section-heading {
+        margin-bottom: 20px;
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .section-kicker {
+        margin: 0 0 6px;
+        color: var(--accent);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+        line-height: 1.3;
+        letter-spacing: -0.015em;
+      }
+
+      .section-summary {
+        max-width: 560px;
+        margin: 0;
+        color: var(--text2);
+        font-size: 13px;
+      }
+
+      .card {
+        border-radius: var(--radius-component);
+        background: var(--surface1);
+      }
+
+      .card-pad {
+        padding: 24px;
+      }
+
+      .grid-2,
+      .grid-3 {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .position-card {
+        min-height: 210px;
+      }
+
+      .icon-box {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--surface2);
+        color: var(--accent);
+      }
+
+      h3 {
+        margin: 18px 0 0;
+        font-size: 19px;
+        font-weight: 600;
+        line-height: 1.45;
+      }
+
+      .card p {
+        margin: 10px 0 0;
+        color: var(--text2);
+        font-size: 13px;
+      }
+
+      .tag-row {
+        margin-top: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tag {
+        min-height: 28px;
+        padding: 0 10px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: var(--surface3);
+        color: var(--text2);
+        font-size: 11px;
+      }
+
+      .tag.info {
+        background: var(--surface2);
+        color: var(--accent);
+      }
+
+      .tag.good {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+
+      .tag.warn {
+        background: var(--warning-bg);
+        color: var(--warning);
+      }
+
+      .decision-card {
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 28px;
+        align-items: center;
+      }
+
+      .decision-state {
+        padding-right: 24px;
+        border-right: 1px solid var(--border);
+      }
+
+      .decision-state strong {
+        display: block;
+        margin-top: 12px;
+        font-size: 27px;
+        line-height: 1.25;
+      }
+
+      .decision-state span:last-child {
+        display: block;
+        margin-top: 8px;
+        color: var(--text2);
+        font-size: 12px;
+      }
+
+      .decision-list {
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+        list-style: none;
+      }
+
+      .decision-list li {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 9px;
+        color: var(--text2);
+        font-size: 13px;
+      }
+
+      .decision-list .material-symbols-rounded {
+        color: var(--success);
+        font-size: 19px;
+      }
+
+      .flow-console {
+        display: grid;
+        grid-template-columns: 360px minmax(0, 1fr);
+        overflow: hidden;
+      }
+
+      .flow-rail {
+        position: relative;
+        padding: 20px;
+        border-right: 1px solid var(--border);
+      }
+
+      .flow-rail::before {
+        content: "";
+        position: absolute;
+        top: 42px;
+        bottom: 42px;
+        left: 43px;
+        width: 1px;
+        background: var(--border-visible);
+      }
+
+      .flow-step {
+        position: relative;
+        width: 100%;
+        min-height: 62px;
+        padding: 9px 12px 9px 48px;
+        display: block;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        color: var(--text1);
+        cursor: pointer;
+        text-align: left;
+        transition: background 160ms var(--ease);
+      }
+
+      .flow-step:hover {
+        background: var(--surface3);
+      }
+
+      .flow-step.active {
+        background: var(--surface2);
+      }
+
+      .step-dot {
+        position: absolute;
+        top: 14px;
+        left: 8px;
+        z-index: 1;
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border: 3px solid var(--surface1);
+        border-radius: 50%;
+        background: var(--surface3);
+        color: var(--text2);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .flow-step.active .step-dot {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .step-title {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .step-owner {
+        display: block;
+        margin-top: 2px;
+        color: var(--text2);
+        font-size: 10px;
+      }
+
+      .flow-detail {
+        min-height: 540px;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .detail-index {
+        color: var(--accent);
+        font-family: var(--font-mono);
+        font-size: 11px;
+      }
+
+      .flow-detail h3 {
+        margin-top: 12px;
+        font-size: 26px;
+      }
+
+      .detail-owner {
+        width: fit-content;
+        margin-top: 14px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: var(--surface2);
+        color: var(--accent);
+        font-size: 11px;
+      }
+
+      .detail-text {
+        max-width: 620px;
+        margin-top: 24px !important;
+        color: var(--text1) !important;
+        font-size: 16px !important;
+        line-height: 1.9;
+      }
+
+      .detail-note {
+        margin-top: 28px;
+        padding: 16px;
+        border-left: 3px solid var(--accent);
+        background: var(--background);
+        color: var(--text2);
+        font-size: 12px;
+      }
+
+      .page-route {
+        padding: 20px 24px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1px;
+        overflow: hidden;
+        background: var(--border);
+      }
+
+      .page-route-item {
+        min-height: 108px;
+        padding: 16px;
+        background: var(--surface1);
+      }
+
+      .page-route-item strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 14px;
+      }
+
+      .page-route-item span:last-child {
+        display: block;
+        margin-top: 4px;
+        color: var(--text2);
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      .route-index {
+        color: var(--accent) !important;
+        font-family: var(--font-mono);
+        font-size: 10px !important;
+      }
+
+      .screen-story {
+        margin-top: 16px;
+        display: grid;
+        gap: 16px;
+      }
+
+      .screen-stage {
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+
+      .screen-stage-copy {
+        position: sticky;
+        top: 88px;
+      }
+
+      .screen-stage-copy h3 {
+        margin-top: 10px;
+      }
+
+      .screen-stage-copy p {
+        line-height: 1.8;
+      }
+
+      .handoff {
+        margin-top: 16px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .handoff-row {
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: var(--background);
+        color: var(--text2);
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      .handoff-row strong {
+        color: var(--text1);
+      }
+
+      .screen-gallery {
+        display: grid;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .shots-1 {
+        grid-template-columns: minmax(0, 440px);
+      }
+
+      .shots-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .shots-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .screen-figure {
+        margin: 0;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--background);
+      }
+
+      .screen-figure img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 8px;
+        background: var(--surface3);
+      }
+
+      .screen-figure figcaption {
+        padding: 8px 4px 2px;
+        color: var(--text2);
+        font-size: 10px;
+        line-height: 1.55;
+      }
+
+      .pipeline {
+        padding: 24px;
+      }
+
+      .pipeline-row {
+        min-height: 78px;
+        display: grid;
+        grid-template-columns: 150px minmax(0, 1fr);
+        gap: 20px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .pipeline-row:last-child {
+        border-bottom: 0;
+      }
+
+      .pipeline-stage {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .pipeline-stage .material-symbols-rounded {
+        color: var(--accent);
+      }
+
+      .pipeline-content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .role-chip {
+        padding: 7px 10px;
+        border-radius: 8px;
+        background: var(--background);
+        color: var(--text2);
+        font-size: 11px;
+      }
+
+      .role-chip.strong {
+        background: var(--surface2);
+        color: var(--accent);
+      }
+
+      .table-card {
+        overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--text2);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      td {
+        font-size: 12px;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .owner-ai,
+      .owner-user,
+      .owner-both {
+        white-space: nowrap;
+        font-weight: 500;
+      }
+
+      .owner-ai {
+        color: var(--accent);
+      }
+
+      .owner-user {
+        color: var(--warning);
+      }
+
+      .owner-both {
+        color: var(--success);
+      }
+
+      .trust-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .trust-item {
+        min-height: 150px;
+        padding: 20px;
+        border-radius: 12px;
+        background: var(--surface1);
+      }
+
+      .trust-item strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .trust-item p {
+        margin: 10px 0 0;
+        color: var(--text2);
+        font-size: 12px;
+      }
+
+      .trust-item.fact {
+        border-top: 3px solid var(--success);
+      }
+
+      .trust-item.inference {
+        border-top: 3px solid var(--accent);
+      }
+
+      .trust-item.unknown {
+        border-top: 3px solid var(--warning);
+      }
+
+      .trust-item.invalid {
+        border-top: 3px solid var(--error);
+      }
+
+      .dialogue {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 16px;
+      }
+
+      .chat-card {
+        padding: 24px;
+      }
+
+      .chat-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .chat-person {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .avatar {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--surface2);
+        color: var(--accent);
+      }
+
+      .chat-bubble {
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 12px;
+        background: var(--background);
+        color: var(--text2);
+        font-size: 13px;
+      }
+
+      .answer-list {
+        margin: 14px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .answer-list li {
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+        color: var(--text2);
+        font-size: 12px;
+      }
+
+      .answer-list li:last-child {
+        border-bottom: 0;
+      }
+
+      .answer-list strong {
+        color: var(--text1);
+      }
+
+      .metric {
+        padding: 20px;
+      }
+
+      .metric-value {
+        display: block;
+        color: var(--text1);
+        font-size: 30px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .metric-name {
+        display: block;
+        margin-top: 2px;
+        color: var(--text2);
+        font-size: 12px;
+      }
+
+      .metric-rule {
+        display: block;
+        margin-top: 12px;
+        color: var(--text3);
+        font-size: 10px;
+      }
+
+      .boundary-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: hidden;
+      }
+
+      .boundary-column {
+        padding: 24px;
+      }
+
+      .boundary-column + .boundary-column {
+        border-left: 1px solid var(--border);
+      }
+
+      .boundary-column h3 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 17px;
+      }
+
+      .boundary-column ul {
+        margin: 16px 0 0;
+        padding-left: 20px;
+        color: var(--text2);
+        font-size: 13px;
+      }
+
+      .callout {
+        padding: 20px 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: var(--warning-bg);
+        color: var(--text2);
+      }
+
+      .callout .material-symbols-rounded {
+        margin-top: 3px;
+        color: var(--warning);
+      }
+
+      .callout strong {
+        color: var(--text1);
+      }
+
+      .footer {
+        margin-top: 48px;
+        padding: 28px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        border-top: 1px solid var(--border);
+        color: var(--text2);
+        font-size: 11px;
+      }
+
+      @media (max-width: 1050px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .side-nav {
+          position: static;
+          padding: 16px 0 0;
+          display: flex;
+          gap: 6px;
+          overflow-x: auto;
+        }
+
+        .side-label,
+        .side-note {
+          display: none;
+        }
+
+        .side-nav a {
+          flex: 0 0 auto;
+        }
+
+        main {
+          padding-top: 20px;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .topbar-inner,
+        .shell {
+          width: min(100% - 24px, 1420px);
+        }
+
+        .button .button-label,
+        .brand-subtitle {
+          display: none;
+        }
+
+        .hero {
+          padding: 30px 24px;
+          border-radius: 16px;
+        }
+
+        h1 {
+          font-size: 34px;
+        }
+
+        .hero-lead {
+          font-size: 15px;
+        }
+
+        .hero-meta {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-stat {
+          min-height: auto;
+        }
+
+        .section {
+          margin-top: 40px;
+        }
+
+        .section-heading {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .grid-2,
+        .grid-3,
+        .trust-grid,
+        .dialogue,
+        .boundary-list {
+          grid-template-columns: 1fr;
+        }
+
+        .decision-card {
+          grid-template-columns: 1fr;
+        }
+
+        .decision-state {
+          padding: 0 0 20px;
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .flow-console {
+          grid-template-columns: 1fr;
+        }
+
+        .flow-rail {
+          display: flex;
+          overflow-x: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .flow-rail::before {
+          display: none;
+        }
+
+        .flow-step {
+          min-width: 190px;
+          padding-left: 48px;
+        }
+
+        .flow-detail {
+          min-height: 360px;
+          padding: 28px 24px;
+        }
+
+        .page-route {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .screen-stage {
+          grid-template-columns: 1fr;
+        }
+
+        .screen-stage-copy {
+          position: static;
+        }
+
+        .shots-2,
+        .shots-3 {
+          grid-template-columns: 1fr;
+        }
+
+        .shots-1 {
+          grid-template-columns: 1fr;
+        }
+
+        .pipeline-row {
+          grid-template-columns: 1fr;
+          gap: 8px;
+          padding: 14px 0;
+        }
+
+        .boundary-column + .boundary-column {
+          border-top: 1px solid var(--border);
+          border-left: 0;
+        }
+
+        .table-scroll {
+          overflow-x: auto;
+        }
+
+        table {
+          min-width: 720px;
+        }
+
+        .footer {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        * {
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      @media print {
+        :root {
+          --background: #fff;
+        }
+
+        .topbar,
+        .side-nav,
+        .top-actions {
+          display: none !important;
+        }
+
+        .shell {
+          width: 100%;
+          display: block;
+        }
+
+        main {
+          padding: 0;
+        }
+
+        .hero {
+          color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+
+        .section,
+        .card,
+        .trust-item {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <span class="material-symbols-rounded">query_stats</span>
+          </span>
+          <div>
+            <p class="brand-title">认知交易舱</p>
+            <p class="brand-subtitle">产品与交互方案 · MVP v1.0</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="button button-secondary" id="theme-toggle" type="button">
+            <span class="material-symbols-rounded" aria-hidden="true">dark_mode</span>
+            <span class="button-label">深色模式</span>
+          </button>
+          <button class="button button-secondary" id="print-button" type="button">
+            <span class="material-symbols-rounded" aria-hidden="true">print</span>
+            <span class="button-label">保存 PDF</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="shell">
+      <nav class="side-nav" aria-label="文档目录">
+        <p class="side-label">Document map</p>
+        <a class="active" href="#overview">
+          <span class="material-symbols-rounded">home</span>方案摘要
+        </a>
+        <a href="#positioning">
+          <span class="material-symbols-rounded">target</span>产品定位
+        </a>
+        <a href="#viability">
+          <span class="material-symbols-rounded">verified</span>成立判断
+        </a>
+        <a href="#journey">
+          <span class="material-symbols-rounded">route</span>交互路径
+        </a>
+        <a href="#product-pages">
+          <span class="material-symbols-rounded">view_carousel</span>页面实证
+        </a>
+        <a href="#architecture">
+          <span class="material-symbols-rounded">account_tree</span>Agent 架构
+        </a>
+        <a href="#collaboration">
+          <span class="material-symbols-rounded">handshake</span>人机协作
+        </a>
+        <a href="#trust">
+          <span class="material-symbols-rounded">fact_check</span>可信表达
+        </a>
+        <a href="#scenario">
+          <span class="material-symbols-rounded">forum</span>典型场景
+        </a>
+        <a href="#threshold">
+          <span class="material-symbols-rounded">monitoring</span>上线门槛
+        </a>
+        <a href="#boundary">
+          <span class="material-symbols-rounded">shield</span>产品边界
+        </a>
+        <p class="side-note">
+          文档版本：MVP v1.0<br />
+          日期：2026-09-09<br />
+          内容依据：课程题面、PRD 与 Agent 流程
+        </p>
+      </nav>
+
+      <main>
+        <section class="hero" id="overview">
+          <p class="eyebrow">
+            <span class="material-symbols-rounded" aria-hidden="true">description</span>
+            产品与交互方案说明
+          </p>
+          <h1>AI投研助手</h1>
+          <p class="hero-lead">
+            面向缺乏完整投研框架的普通自主投资者，TradingAgents
+            负责把碎片化市场信息压缩成专业报告；多视角协作室让相反证据同时可见；个人助手再用用户能理解的语言解释，但不替用户做交易决定。
+          </p>
+          <div class="hero-meta" aria-label="方案核心数字">
+            <div class="hero-stat">
+              <strong>10 分钟</strong>
+              <span>目标：从异动提问到形成可解释判断</span>
+            </div>
+            <div class="hero-stat">
+              <strong>9 个角色</strong>
+              <span>前台聚合展示，后台保留完整辩论链</span>
+            </div>
+            <div class="hero-stat">
+              <strong>0 次代客交易</strong>
+              <span>系统止于决策支持，最终行动由用户确认</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="positioning">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">01 / POSITIONING</p>
+              <h2>它是什么，也明确不是什么</h2>
+            </div>
+            <p class="section-summary">
+              产品位于资讯工具与交易决策之间，核心不是继续增加信息，而是帮助用户建立可复述、可质疑的判断。
+            </p>
+          </div>
+          <div class="grid-3">
+            <article class="card card-pad position-card">
+              <span class="icon-box">
+                <span class="material-symbols-rounded">person</span>
+              </span>
+              <h3>服务谁</h3>
+              <p>
+                关注 3–20
+                只股票、会主动研究，但缺乏行情、基本面、新闻与风险完整框架的普通自主投资者。
+              </p>
+              <div class="tag-row">
+                <span class="tag info">核心用户</span>
+                <span class="tag">高频持续需求</span>
+              </div>
+            </article>
+            <article class="card card-pad position-card">
+              <span class="icon-box">
+                <span class="material-symbols-rounded">filter_alt</span>
+              </span>
+              <h3>解决什么</h3>
+              <p>
+                把“发生了什么、为什么重要、有哪些反证、何时失效”串成一条证据链，降低信息噪音与单一结论锚定。
+              </p>
+              <div class="tag-row">
+                <span class="tag info">专业降噪</span>
+                <span class="tag info">多视角去偏</span>
+              </div>
+            </article>
+            <article class="card card-pad position-card">
+              <span class="icon-box">
+                <span class="material-symbols-rounded">block</span>
+              </span>
+              <h3>不做什么</h3>
+              <p>
+                不做资讯搬运、荐股机器人、收益承诺或自动交易系统；不以 Agent
+                数量投票，也不从浏览记录推断真实持仓与风险承受力。
+              </p>
+              <div class="tag-row">
+                <span class="tag warn">决策支持 ≠ 投资指令</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="viability">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">02 / VIABILITY</p>
+              <h2>结论：产品有条件成立</h2>
+            </div>
+            <p class="section-summary">
+              需求成立来自题面观察；产品价值与安全性仍需用上线前指标验证，不能把方案假设写成已验证事实。
+            </p>
+          </div>
+          <article class="card decision-card">
+            <div class="decision-state">
+              <span class="tag good">GO · 进入验证</span>
+              <strong>有条件成立</strong>
+              <span>先验证降噪与可信表达，再决定是否上线。</span>
+            </div>
+            <ul class="decision-list">
+              <li>
+                <span class="material-symbols-rounded">check_circle</span>
+                <span><strong>问题真实：</strong>用户面对碎片信息，现有推送工具没有替其完成消化与判断。</span>
+              </li>
+              <li>
+                <span class="material-symbols-rounded">check_circle</span>
+                <span><strong>Agent 必要：</strong>任务需要意图识别、多源工具调用、多步骤综合判断、辩论与交互澄清。</span>
+              </li>
+              <li>
+                <span class="material-symbols-rounded">check_circle</span>
+                <span><strong>差异明确：</strong>TradingAgents 解决专业降噪，协作室解决单一结论锚定，个人助手解决理解门槛。</span>
+              </li>
+              <li>
+                <span class="material-symbols-rounded">check_circle</span>
+                <span><strong>边界可控：</strong>高风险问题强制补充上下文，不自动交易，并展示证据时间与失效条件。</span>
+              </li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="section" id="journey">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">03 / INTERACTION PATH</p>
+              <h2>从一句提问到可解释结论</h2>
+            </div>
+            <p class="section-summary">
+              点击左侧步骤查看责任与输出。主路径在“AI 自动处理”和“用户关键确认”之间交替，而不是把全部控制交给模型。
+            </p>
+          </div>
+          <div class="card flow-console">
+            <div class="flow-rail" role="tablist" aria-label="交互步骤">
+              <button
+                class="flow-step active"
+                type="button"
+                data-index="STEP 01"
+                data-title="用户发起问题"
+                data-owner="用户主导"
+                data-detail="用户从 AI 自选股进入，或输入股票代码、分析日期与自然语言问题。系统展示将要分析的标的和数据窗口，避免跨标的或跨日期误用。"
+              >
+                <span class="step-dot">1</span>
+                <span class="step-title">发起问题</span>
+                <span class="step-owner">用户 · 标的与任务</span>
+              </button>
+              <button
+                class="flow-step"
+                type="button"
+                data-index="STEP 02"
+                data-title="加载授权上下文"
+                data-owner="AI 自动"
+                data-detail="个人助手加载用户明确设置、AI 自选股和授权的站内浏览记录。画像只影响解释顺序、术语和详略，不改变事实、证据权重或专业结论。"
+              >
+                <span class="step-dot">2</span>
+                <span class="step-title">加载上下文</span>
+                <span class="step-owner">AI · 仅限已授权数据</span>
+              </button>
+              <button
+                class="flow-step"
+                type="button"
+                data-index="STEP 03"
+                data-title="识别意图并检查缺失"
+                data-owner="AI 检查 + 用户确认"
+                data-detail="系统判断用户是在问异动原因、新闻影响、长期逻辑还是买卖决策。买卖类问题若缺少持仓、周期或风险边界，必须先向用户澄清，不能直接给指令。"
+              >
+                <span class="step-dot">3</span>
+                <span class="step-title">检查信息</span>
+                <span class="step-owner">人机协作 · 高风险门槛</span>
+              </button>
+              <button
+                class="flow-step"
+                type="button"
+                data-index="STEP 04"
+                data-title="运行 TradingAgents"
+                data-owner="AI 自动"
+                data-detail="系统调用行情、新闻、公告、基本面和情绪数据；四类分析师并行研究，多空研究交叉质询，交易与风险角色继续压力测试，最终形成专业报告。"
+              >
+                <span class="step-dot">4</span>
+                <span class="step-title">专业分析</span>
+                <span class="step-owner">AI · 多源工具与多 Agent</span>
+              </button>
+              <button
+                class="flow-step"
+                type="button"
+                data-index="STEP 05"
+                data-title="检查报告可用性"
+                data-owner="AI 自动"
+                data-detail="系统检查关键章节、时间戳、数据状态和依据是否可用。若数据不足或工具失败，明确缺失来源与影响范围，并让用户选择补充、重试或查看有限结论。"
+              >
+                <span class="step-dot">5</span>
+                <span class="step-title">结果检查</span>
+                <span class="step-owner">AI · 失败进入统一降级</span>
+              </button>
+              <button
+                class="flow-step"
+                type="button"
+                data-index="STEP 06"
+                data-title="生成报告与角色索引"
+                data-owner="AI 自动"
+                data-detail="可用报告按标的、分析批次、角色、章节和时间切分，建立角色级 RAG 索引。协作室优先检索报告依据，而不是只读取最终 BUY、SELL 或 HOLD 标签。"
+              >
+                <span class="step-dot">6</span>
+                <span class="step-title">结构化报告</span>
+                <span class="step-owner">AI · 建立可追溯依据</span>
+              </button>
+              <button
+                class="flow-step"
+                type="button"
+                data-index="STEP 07"
+                data-title="多视角协作回答"
+                data-owner="AI 自动"
+                data-detail="个人助手根据问题路由相关角色。研究员同时呈现支持与反对逻辑；风险分析师汇总乐观、基准和保守情景；不同角色不按人数投票。"
+              >
+                <span class="step-dot">7</span>
+                <span class="step-title">协作室追问</span>
+                <span class="step-owner">AI · 角色级 RAG</span>
+              </button>
+              <button
+                class="flow-step"
+                type="button"
+                data-index="STEP 08"
+                data-title="可信总结与最终决定"
+                data-owner="AI 总结 + 用户决定"
+                data-detail="个人助手按用户画像解释事实、推断、未知、分歧和失效条件。用户可以继续追问、纠正画像或结束；是否采取任何现实投资行动始终由用户决定。"
+              >
+                <span class="step-dot">8</span>
+                <span class="step-title">用户确认</span>
+                <span class="step-owner">用户 · 保留最终决定权</span>
+              </button>
+            </div>
+            <div class="flow-detail" aria-live="polite">
+              <span class="detail-index" id="detail-index">STEP 01</span>
+              <h3 id="detail-title">用户发起问题</h3>
+              <span class="detail-owner" id="detail-owner">用户主导</span>
+              <p class="detail-text" id="detail-text">
+                用户从 AI
+                自选股进入，或输入股票代码、分析日期与自然语言问题。系统展示将要分析的标的和数据窗口，避免跨标的或跨日期误用。
+              </p>
+              <div class="detail-note">
+                交互原则：低风险步骤由 AI 自动推进；会改变分析对象、使用隐私数据或可能影响现实交易的步骤，由用户确认。
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="product-pages">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">04 / PRODUCT SCREENS</p>
+              <h2>四个页面承载一条完整的人机协作路径</h2>
+            </div>
+            <p class="section-summary">
+              页面不是彼此独立的功能集合：工作台定义任务，分析记录呈现 AI
+              的研究过程与依据，协作室帮助用户挑战结论，“我的投研”则把用户确认过的解释偏好带回下一次任务。
+            </p>
+          </div>
+
+          <div class="card page-route" aria-label="页面级交互路径">
+            <div class="page-route-item">
+              <span class="route-index">01 · 用户输入</span>
+              <strong>工作台</strong>
+              <span>确认标的、日期、研究深度与重点，主动发起分析。</span>
+            </div>
+            <div class="page-route-item">
+              <span class="route-index">02 · AI 研究</span>
+              <strong>分析记录</strong>
+              <span>自动运行多 Agent 链，展示进度、摘要、依据和边界。</span>
+            </div>
+            <div class="page-route-item">
+              <span class="route-index">03 · 人机协作</span>
+              <strong>协作室</strong>
+              <span>用户追问和质疑，AI 调度角色呈现分歧并补问约束。</span>
+            </div>
+            <div class="page-route-item">
+              <span class="route-index">04 · 用户控制</span>
+              <strong>我的投研</strong>
+              <span>用户修正解释偏好与授权，影响表达但不改变事实。</span>
+            </div>
+          </div>
+
+          <div class="screen-story">
+            <article class="card screen-stage">
+              <div class="screen-stage-copy">
+                <span class="tag info">01 · 工作台</span>
+                <h3>用户定义问题，AI 不替用户猜任务</h3>
+                <p>
+                  用户输入股票代码，并确认研究深度、分析日期和重点关注方向。点击“开始多
+                  Agent 分析”才会创建新任务；AI
+                  同时加载已经授权的自选股、浏览记录和画像上下文。
+                </p>
+                <div class="handoff">
+                  <div class="handoff-row">
+                    <strong>用户负责：</strong>确认标的、时间窗口与研究目标。
+                  </div>
+                  <div class="handoff-row">
+                    <strong>AI 负责：</strong>组合授权上下文、识别问题并规划研究范围。
+                  </div>
+                  <div class="handoff-row">
+                    <strong>页面输出：</strong>边界清晰、可以执行的一次分析任务。
+                  </div>
+                </div>
+              </div>
+              <div class="screen-gallery shots-1">
+                <figure class="screen-figure">
+                  <img
+                    src="./assets/screenshots/01-workbench.png"
+                    alt="工作台页面，包含股票代码、研究深度、日期、关注方向和开始分析按钮"
+                    loading="lazy"
+                  />
+                  <figcaption>
+                    图 1｜工作台：由用户主动确认分析对象与参数，避免 AI
+                    跨标的或跨日期推断。
+                  </figcaption>
+                </figure>
+              </div>
+            </article>
+
+            <article class="card screen-stage">
+              <div class="screen-stage-copy">
+                <span class="tag info">02 · 分析记录</span>
+                <h3>AI 自动研究，但过程、证据和限制全部可见</h3>
+                <p>
+                  TradingAgents
+                  自动完成多源数据调用、四类分析师并行研究、多空辩论、交易方案和风险裁决。用户无需逐步操作，但可以看到完成进度、数据窗口、个人助手摘要和原始角色报告。
+                </p>
+                <div class="handoff">
+                  <div class="handoff-row">
+                    <strong>AI 负责：</strong>专业分析、结果检查、结构化报告与角色级索引。
+                  </div>
+                  <div class="handoff-row">
+                    <strong>用户负责：</strong>核对“非实时”标识、事实与推断，并决定是否继续追问。
+                  </div>
+                  <div class="handoff-row">
+                    <strong>质量闸门：</strong>关键数据缺失时缩小结论，不补造完整答案。
+                  </div>
+                </div>
+              </div>
+              <div class="screen-gallery shots-3">
+                <figure class="screen-figure">
+                  <img
+                    src="./assets/screenshots/02-analysis-progress.png"
+                    alt="分析记录中的多 Agent 分析进度和非实时案例标识"
+                    loading="lazy"
+                  />
+                  <figcaption>图 2｜进度可见：展示研究链完成状态与数据时间。</figcaption>
+                </figure>
+                <figure class="screen-figure">
+                  <img
+                    src="./assets/screenshots/03-analysis-summary.png"
+                    alt="分析记录中的个人助手摘要，区分事实、推断、未知和失效条件"
+                    loading="lazy"
+                  />
+                  <figcaption>
+                    图 3｜可信摘要：结论与事实、推断、未知、失效条件同时出现。
+                  </figcaption>
+                </figure>
+                <figure class="screen-figure">
+                  <img
+                    src="./assets/screenshots/04-analysis-report.png"
+                    alt="分析记录中的组合经理结论和原始 Agent 报告"
+                    loading="lazy"
+                  />
+                  <figcaption>
+                    图 4｜依据回查：用户可以继续阅读组合经理与各专业角色报告。
+                  </figcaption>
+                </figure>
+              </div>
+            </article>
+
+            <article class="card screen-stage">
+              <div class="screen-stage-copy">
+                <span class="tag info">03 · 协作室</span>
+                <h3>把单一答案改成可追问的多视角判断</h3>
+                <p>
+                  用户可在总工作群询问“为什么涨”或“现在适合买入吗”。个人助手根据意图调度相关角色；所有回答仅检索当前标的、当前分析批次的报告。研究员呈现正反逻辑，风险分析师呈现三种情景，最后由个人助手整理边界。
+                </p>
+                <div class="handoff">
+                  <div class="handoff-row">
+                    <strong>用户负责：</strong>追问、质疑依据，并补充持仓、周期和风险边界。
+                  </div>
+                  <div class="handoff-row">
+                    <strong>AI 负责：</strong>按问题路由角色，区分事实、推断和未知。
+                  </div>
+                  <div class="handoff-row">
+                    <strong>决策原则：</strong>角色分工不等于多数投票，最终现实行动仍由用户决定。
+                  </div>
+                </div>
+              </div>
+              <div class="screen-gallery shots-2">
+                <figure class="screen-figure">
+                  <img
+                    src="./assets/screenshots/05-collaboration-evidence.png"
+                    alt="协作室中市场、新闻和个人助手回答上涨驱动问题"
+                    loading="lazy"
+                  />
+                  <figcaption>
+                    图 5｜解释事件：专业角色说明事实和边界，个人助手再做可理解总结。
+                  </figcaption>
+                </figure>
+                <figure class="screen-figure">
+                  <img
+                    src="./assets/screenshots/06-collaboration-decision.png"
+                    alt="协作室中用户追问是否买入，研究员呈现支持与反对逻辑"
+                    loading="lazy"
+                  />
+                  <figcaption>
+                    图 6｜回答买卖问题：先展示分歧，再要求补齐用户个人约束。
+                  </figcaption>
+                </figure>
+              </div>
+            </article>
+
+            <article class="card screen-stage">
+              <div class="screen-stage-copy">
+                <span class="tag info">04 · 我的投研</span>
+                <h3>用户控制画像，画像只改变解释方式</h3>
+                <p>
+                  用户可设置先结论还是先证据、常用关注周期、优先关注维度和专业术语偏好，并可关闭个性化解释与浏览记录授权。下一次对话读取这些设置，但专业报告仍由数据与证据决定。
+                </p>
+                <div class="handoff">
+                  <div class="handoff-row">
+                    <strong>用户负责：</strong>查看、修改、删除或关闭画像及数据授权。
+                  </div>
+                  <div class="handoff-row">
+                    <strong>AI 负责：</strong>只调整术语、信息顺序、详略与举例。
+                  </div>
+                  <div class="handoff-row">
+                    <strong>禁止推断：</strong>资产规模、真实持仓、成本和风险承受力不得由浏览记录推出。
+                  </div>
+                </div>
+              </div>
+              <div class="screen-gallery shots-1">
+                <figure class="screen-figure">
+                  <img
+                    src="./assets/screenshots/07-my-research.png"
+                    alt="我的投研页面，包含解释偏好、关注周期、关注重点和术语设置"
+                    loading="lazy"
+                  />
+                  <figcaption>
+                    图 7｜用户控制：个性化解释可修改、可关闭，且不改变专业事实。
+                  </figcaption>
+                </figure>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="architecture">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">05 / AGENT SYSTEM</p>
+              <h2>专业降噪不是一个按钮，而是一条研究链</h2>
+            </div>
+            <p class="section-summary">
+              本方案不额外包装独立“过滤器”。信息在专业分工、正反辩论、风险压力测试和最终裁决中逐层被筛选与压缩。
+            </p>
+          </div>
+          <article class="card pipeline">
+            <div class="pipeline-row">
+              <div class="pipeline-stage">
+                <span class="material-symbols-rounded">database</span>多源输入
+              </div>
+              <div class="pipeline-content">
+                <span class="role-chip">实时／历史行情</span>
+                <span class="role-chip">财经新闻</span>
+                <span class="role-chip">公司公告</span>
+                <span class="role-chip">基本面数据</span>
+                <span class="role-chip">市场情绪</span>
+              </div>
+            </div>
+            <div class="pipeline-row">
+              <div class="pipeline-stage">
+                <span class="material-symbols-rounded">analytics</span>并行研究
+              </div>
+              <div class="pipeline-content">
+                <span class="role-chip strong">市场分析师</span>
+                <span class="role-chip strong">情绪分析师</span>
+                <span class="role-chip strong">新闻分析师</span>
+                <span class="role-chip strong">基本面分析师</span>
+              </div>
+            </div>
+            <div class="pipeline-row">
+              <div class="pipeline-stage">
+                <span class="material-symbols-rounded">balance</span>交叉质询
+              </div>
+              <div class="pipeline-content">
+                <span class="role-chip">后台：多头研究员</span>
+                <span class="role-chip">后台：空头研究员</span>
+                <span class="role-chip strong">前台聚合：研究员</span>
+                <span class="role-chip">研究经理裁决</span>
+              </div>
+            </div>
+            <div class="pipeline-row">
+              <div class="pipeline-stage">
+                <span class="material-symbols-rounded">shield</span>方案与风险
+              </div>
+              <div class="pipeline-content">
+                <span class="role-chip">交易员</span>
+                <span class="role-chip">后台：激进／中性／保守</span>
+                <span class="role-chip strong">前台聚合：风险分析师</span>
+                <span class="role-chip">投资组合经理</span>
+              </div>
+            </div>
+            <div class="pipeline-row">
+              <div class="pipeline-stage">
+                <span class="material-symbols-rounded">forum</span>用户解释
+              </div>
+              <div class="pipeline-content">
+                <span class="role-chip strong">个人助手：路由、转译、总结、确认</span>
+                <span class="role-chip">角色级 RAG：同标的、同批次、同章节</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="section" id="collaboration">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">06 / HUMAN–AI</p>
+              <h2>哪些自动完成，哪些必须让用户参与</h2>
+            </div>
+            <p class="section-summary">
+              自动化负责降低操作成本；确认点负责避免隐私越界、数据误用与高风险决策被模型替代。
+            </p>
+          </div>
+          <div class="card table-card table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>环节</th>
+                  <th>AI 自动完成</th>
+                  <th>用户参与／确认</th>
+                  <th>责任归属</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>任务进入</td>
+                  <td>加载已授权的自选股、浏览记录与画像</td>
+                  <td>确认股票代码与分析日期</td>
+                  <td class="owner-both">人机协作</td>
+                </tr>
+                <tr>
+                  <td>意图检查</td>
+                  <td>识别问题类型与必要信息</td>
+                  <td>买卖问题补充持仓、周期和风险边界</td>
+                  <td class="owner-both">人机协作</td>
+                </tr>
+                <tr>
+                  <td>专业研究</td>
+                  <td>调用数据、并行分析、辩论、压力测试与报告检查</td>
+                  <td>主动触发刷新；失败时选择重试或有限结论</td>
+                  <td class="owner-ai">AI 执行</td>
+                </tr>
+                <tr>
+                  <td>协作追问</td>
+                  <td>检索同次报告、路由相关角色并生成差异化回答</td>
+                  <td>选择总群或单聊，并继续追问</td>
+                  <td class="owner-both">人机协作</td>
+                </tr>
+                <tr>
+                  <td>可信总结</td>
+                  <td>转译术语，汇总事实、推断、未知与失效条件</td>
+                  <td>确认理解，纠正画像或补充个人信息</td>
+                  <td class="owner-both">人机协作</td>
+                </tr>
+                <tr>
+                  <td>现实行动</td>
+                  <td>不下单、不保证收益、不替用户承担风险</td>
+                  <td>决定是否继续研究或采取任何投资行动</td>
+                  <td class="owner-user">用户决定</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section" id="trust">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">07 / TRUST LANGUAGE</p>
+              <h2>让结论自带边界，而不是只附免责声明</h2>
+            </div>
+            <p class="section-summary">
+              每次专业回答都遵循统一协议；置信度表示证据支持程度，不是收益概率。
+            </p>
+          </div>
+          <div class="trust-grid">
+            <article class="trust-item fact">
+              <strong>已确认事实</strong>
+              <p>报告或数据已支持的内容，附数据时间、章节或证据编号，可回查来源。</p>
+            </article>
+            <article class="trust-item inference">
+              <strong>分析推断</strong>
+              <p>从事实推出但尚未发生的判断，必须同时说明依赖的关键假设。</p>
+            </article>
+            <article class="trust-item unknown">
+              <strong>仍然未知</strong>
+              <p>数据未披露、个人信息未确认或报告未覆盖的内容，不能用猜测补齐。</p>
+            </article>
+            <article class="trust-item invalid">
+              <strong>失效条件</strong>
+              <p>出现后必须重新评估的可观察信号，防止用户把旧结论长期固化。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="scenario">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">08 / DEMO MOMENT</p>
+              <h2>典型场景：“这只股票现在该买吗？”</h2>
+            </div>
+            <p class="section-summary">
+              Demo 使用明确标注的 NVDA 预置交互案例，只用于稳定展示产品闭环，不代表当前行情或真实投资建议。
+            </p>
+          </div>
+          <div class="dialogue">
+            <article class="card chat-card">
+              <div class="chat-meta">
+                <div class="chat-person">
+                  <span class="avatar">用</span>
+                  用户提问
+                </div>
+                <span class="tag warn">高风险意图</span>
+              </div>
+              <div class="chat-bubble">
+                “结合这份报告，现在适合买入吗？”
+              </div>
+              <ul class="answer-list">
+                <li><strong>系统识别：</strong>买卖问题，不能只返回最终标签。</li>
+                <li><strong>必选角色：</strong>研究员、风险分析师。</li>
+                <li><strong>可选角色：</strong>交易员、投资组合经理及相关信息分析师。</li>
+                <li><strong>个人缺失：</strong>是否持有、计划周期、可承受回撤。</li>
+              </ul>
+            </article>
+            <article class="card chat-card">
+              <div class="chat-meta">
+                <div class="chat-person">
+                  <span class="avatar">
+                    <span class="material-symbols-rounded">smart_toy</span>
+                  </span>
+                  个人助手总结
+                </div>
+                <span class="tag info">条件化回答</span>
+              </div>
+              <div class="chat-bubble">
+                “当前报告支持的是 HOLD／条件观察，不是对你的个人买卖指令。”
+              </div>
+              <ul class="answer-list">
+                <li><strong>事实：</strong>增长驱动与生态优势有案例材料支持。</li>
+                <li><strong>分歧：</strong>需求能否持续高于已经很高的市场预期。</li>
+                <li><strong>风险：</strong>需求、盈利质量或政策变化可能放大回撤。</li>
+                <li><strong>请确认：</strong>持仓状态、持有周期与最大可接受回撤。</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="threshold">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">09 / GO–NO GO</p>
+              <h2>上线前最低验证门槛</h2>
+            </div>
+            <p class="section-summary">
+              以下为建议门槛，并非本次原型已经取得的实测成绩；完整方法与样本设计在评估方案中说明。
+            </p>
+          </div>
+          <div class="grid-3">
+            <article class="card metric">
+              <span class="metric-value">≥ 90%</span>
+              <span class="metric-name">关键事件召回率</span>
+              <span class="metric-rule">若持续遗漏关键公告，则降噪价值不成立</span>
+            </article>
+            <article class="card metric">
+              <span class="metric-value">≥ 80%</span>
+              <span class="metric-name">保留信息相关率</span>
+              <span class="metric-rule">若报告仍与资讯列表同样冗余，则暂停上线</span>
+            </article>
+            <article class="card metric">
+              <span class="metric-value">≥ 95%</span>
+              <span class="metric-name">事实与引用一致率</span>
+              <span class="metric-rule">任何关键事实必须能由引用直接支撑</span>
+            </article>
+            <article class="card metric">
+              <span class="metric-value">≥ 90%</span>
+              <span class="metric-name">事实／推断／未知标注准确率</span>
+              <span class="metric-rule">由双人标注并对分歧复核</span>
+            </article>
+            <article class="card metric">
+              <span class="metric-value">≥ 90%</span>
+              <span class="metric-name">关键相反证据覆盖率</span>
+              <span class="metric-rule">防止多 Agent 只重复同一方向观点</span>
+            </article>
+            <article class="card metric">
+              <span class="metric-value">0 次</span>
+              <span class="metric-name">无依据确定性买卖结论</span>
+              <span class="metric-rule">买卖问题必要确认触发率必须为 100%</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="boundary">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">10 / BOUNDARY</p>
+              <h2>能力边界与失败时的行为</h2>
+            </div>
+            <p class="section-summary">
+              “知道自己不知道什么”是产品可信度的一部分。接口失败或证据不足时，系统缩小结论，而不是补造完整答案。
+            </p>
+          </div>
+          <article class="card boundary-list">
+            <div class="boundary-column">
+              <h3>
+                <span class="material-symbols-rounded" style="color: var(--success)">check_circle</span>
+                Agent 可以
+              </h3>
+              <ul>
+                <li>整理多源信息并提取与标的相关的关键变化</li>
+                <li>运行多角色研究、辩论、压力测试与结果检查</li>
+                <li>展示支持证据、反对证据、假设和失效条件</li>
+                <li>根据用户画像调整术语、顺序、详略与举例</li>
+                <li>数据不足时说明缺失、影响范围与下一步选择</li>
+              </ul>
+            </div>
+            <div class="boundary-column">
+              <h3>
+                <span class="material-symbols-rounded" style="color: var(--error)">cancel</span>
+                Agent 不可以
+              </h3>
+              <ul>
+                <li>把历史案例冒充实时行情或把推断写成事实</li>
+                <li>隐藏关键反证，或用发言人数决定结论</li>
+                <li>从浏览记录推断资产规模、持仓成本或风险承受力</li>
+                <li>保证收益、给出无条件买卖指令或自动执行交易</li>
+                <li>在引用不支持结论时维持确定性表达</li>
+              </ul>
+            </div>
+          </article>
+          <div class="card callout" style="margin-top: 16px">
+            <span class="material-symbols-rounded">warning</span>
+            <div>
+              <strong>统一降级：</strong>
+              明确指出缺失的数据源、受影响的判断和数据时间；用户可以补充信息、重试、查看有限结论或结束。分享版 Demo
+              使用预置案例数据，并始终标注“非实时”。
+            </div>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <span>认知交易舱 · TradingAgents 多视角 AI 投研助手</span>
+          <span>核心原则：个性化解释，不个性化事实</span>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      const root = document.documentElement;
+      const themeButton = document.getElementById("theme-toggle");
+      const themeLabel = themeButton.querySelector(".button-label");
+      const themeIcon = themeButton.querySelector(".material-symbols-rounded");
+
+      themeButton.addEventListener("click", function () {
+        const nextDark = root.getAttribute("data-theme") !== "dark";
+        root.setAttribute("data-theme", nextDark ? "dark" : "light");
+        themeLabel.textContent = nextDark ? "浅色模式" : "深色模式";
+        themeIcon.textContent = nextDark ? "light_mode" : "dark_mode";
+      });
+
+      document.getElementById("print-button").addEventListener("click", function () {
+        window.print();
+      });
+
+      const steps = Array.from(document.querySelectorAll(".flow-step"));
+      const detailIndex = document.getElementById("detail-index");
+      const detailTitle = document.getElementById("detail-title");
+      const detailOwner = document.getElementById("detail-owner");
+      const detailText = document.getElementById("detail-text");
+
+      steps.forEach(function (step) {
+        step.addEventListener("click", function () {
+          steps.forEach(function (item) {
+            item.classList.remove("active");
+            item.removeAttribute("aria-selected");
+          });
+          step.classList.add("active");
+          step.setAttribute("aria-selected", "true");
+          detailIndex.textContent = step.dataset.index;
+          detailTitle.textContent = step.dataset.title;
+          detailOwner.textContent = step.dataset.owner;
+          detailText.textContent = step.dataset.detail;
+        });
+      });
+
+      const navLinks = Array.from(document.querySelectorAll(".side-nav a"));
+      const sections = navLinks
+        .map(function (link) {
+          return document.querySelector(link.getAttribute("href"));
+        })
+        .filter(Boolean);
+
+      const observer = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            navLinks.forEach(function (link) {
+              link.classList.toggle(
+                "active",
+                link.getAttribute("href") === "#" + entry.target.id,
+              );
+            });
+          });
+        },
+        { rootMargin: "-25% 0px -65% 0px" },
+      );
+
+      sections.forEach(function (section) {
+        observer.observe(section);
+      });
+    </script>
+  </body>
+</html>

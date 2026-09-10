@@ -4,10 +4,10 @@ TradingAgents 的 Web 投研助手，包含 AI 自选股、个人投研画像、
 
 ## 启动
 
-在终端运行：
+在项目根目录运行：
 
 ```bash
-/Users/yue/TradingAgents/start-web.sh
+./start-web.sh
 ```
 
 然后访问 <http://localhost:3000>。

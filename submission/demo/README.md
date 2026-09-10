@@ -7,7 +7,7 @@
 如需用本地服务器打开：
 
 ```bash
-cd /Users/yue/TradingAgents/submission/demo
+cd submission/demo
 python3 -m http.server 4173
 ```
 
@@ -16,7 +16,7 @@ python3 -m http.server 4173
 也可以运行项目开发版：
 
 ```bash
-cd /Users/yue/TradingAgents/web
+cd web
 npm run dev
 ```
 
